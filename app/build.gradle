@@ -1,0 +1,84 @@
+apply plugin: 'com.android.application'
+apply plugin: 'me.tatarka.retrolambda'
+apply plugin: 'com.neenbedankt.android-apt'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.0"
+
+    defaultConfig {
+        applicationId "com.emmaguy.videopocket"
+        minSdkVersion 16
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+
+        resValue "string", "pocket_app_id", "placeholderId"
+        resValue "string", "youtube_api_key", "placeholderId"
+    }
+    buildTypes {
+        debug {
+            testCoverageEnabled true
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    lintOptions {
+        disable 'InvalidPackage', 'PrivateResource', 'UnusedResources'
+    }
+}
+
+dependencies {
+    // Date/time
+    compile 'com.jakewharton.threetenabp:threetenabp:1.0.2'
+
+    // Ui
+    compile 'com.android.support:appcompat-v7:23.0.1'
+    compile 'com.android.support:recyclerview-v7:23.0.1'
+    compile 'com.android.support:design:23.0.1'
+    compile 'com.jakewharton:butterknife:7.0.1'
+    compile 'com.github.castorflex.smoothprogressbar:library:1.1.0'
+
+    // Dagger
+    provided 'javax.annotation:jsr250-api:1.0'
+    compile 'com.google.dagger:dagger:2.0.1'
+    apt 'com.google.dagger:dagger-compiler:2.0.1'
+
+    // Logging
+    compile 'com.jakewharton.timber:timber:3.1.0'
+
+    // Network
+    compile 'com.squareup.retrofit:retrofit:1.9.0'
+    compile 'com.squareup.okhttp:okhttp:2.5.0'
+
+    // RxJava
+    compile 'io.reactivex:rxjava:1.0.14'
+    compile 'io.reactivex:rxandroid:1.0.1'
+    compile 'com.jakewharton.rxbinding:rxbinding:0.2.0'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.mockito:mockito-core:2.0.31-beta'
+}
+
+
+def appProperties = "app.properties"
+if (project.hasProperty(appProperties) && file(project.property(appProperties)).canRead()) {
+    def Properties props = new Properties()
+    props.load(new FileInputStream(file(project.property(appProperties))))
+
+    if (props != null && props.containsKey('pocket_app_id') && props.containsKey('youtube_api_key')) {
+        android.defaultConfig.resValue "string", "pocket_app_id", props['pocket_app_id']
+        android.defaultConfig.resValue "string", "youtube_api_key", props['youtube_api_key']
+    } else {
+        println 'Did not find Pocket client id/YouTube API key in ' + appProperties
+    }
+} else {
+    println appProperties + ' not found'
+    android.buildTypes.release.signingConfig = null
+}

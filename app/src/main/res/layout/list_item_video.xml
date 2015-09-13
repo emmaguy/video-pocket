@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:gravity="center_vertical"
+              android:minHeight="64dp"
+              android:orientation="horizontal">
+
+    <RelativeLayout
+        android:id="@+id/videos_video_container"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        android:background="?selectableItemBackground"
+        android:orientation="vertical"
+        android:paddingEnd="@dimen/padding_small"
+        android:paddingLeft="@dimen/padding_small"
+        android:paddingRight="@dimen/padding_medium"
+        android:paddingStart="@dimen/padding_medium">
+
+        <TextView
+            android:id="@+id/videos_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:maxLines="2"
+            android:paddingTop="@dimen/padding_medium"
+            android:textColor="@color/primary_text"
+            android:textStyle="bold"
+            tools:text="blah blah title  title  title  title  title  title  title  title  title  title  title  title " />
+
+        <TextView
+            android:id="@+id/videos_duration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentRight="true"
+            android:layout_marginBottom="@dimen/padding_small"
+            android:textColor="@color/secondary_text"
+            tools:text="10:12" />
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/videos_open_pocket"
+        android:layout_width="64dp"
+        android:layout_height="match_parent"
+        android:background="?selectableItemBackground"
+        android:gravity="center"
+        android:paddingEnd="@dimen/padding_medium"
+        android:paddingLeft="@dimen/padding_small"
+        android:paddingRight="@dimen/padding_medium"
+        android:paddingStart="@dimen/padding_small"
+        android:text="@string/open_pocket"
+        android:textColor="@color/secondary_text"
+        tools:ignore="NewApi" />
+
+</LinearLayout>
