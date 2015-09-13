@@ -1,0 +1,38 @@
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.emmaguy.videopocket">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:name=".VideoPocketApplication"
+        android:allowBackup="true"
+        android:fullBackupContent="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".login.LoginActivity"
+            android:noHistory="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="@string/callback_url_host"
+                    android:scheme="@string/callback_url_scheme" />
+            </intent-filter>
+        </activity>
+
+        <activity android:name=".video.VideoActivity" />
+
+    </application>
+
+</manifest>

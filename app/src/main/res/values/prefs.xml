@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="callback_url_host">callback</string>
+    <string name="callback_url_scheme">videopocket</string>
+
+    <string name="shared_pref_name">pref_name</string>
+
+    <string name="pref_key_username">username</string>
+    <string name="pref_key_access_token">access_token</string>
+    <string name="pref_key_request_token">request_token</string>
+
+    <string name="pref_key_videos">key_videos</string>
+</resources>

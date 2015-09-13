@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Video Pocket</string>
+
+    <string name="login">Login</string>
+    <string name="redirecting_to_browser">Redirecting to browser…</string>
+
+    <string name="failed_to_retrieve_request_token">Failed to retrieve request token from Pocket. Please check your internet connection and try again.</string>
+    <string name="failed_to_retrieve_access_token">Failed to retrieve access token from Pocket. Please try again.</string>
+
+    <string name="error_generic_refresh">Something went wrong whilst refreshing</string>
+    <string name="refresh">Refresh</string>
+    <string name="open_pocket">Open Pocket</string>
+    <string name="row_title_format">%1$d . %2$s</string>
+</resources>

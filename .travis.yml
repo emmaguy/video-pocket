@@ -1,0 +1,18 @@
+sudo: false
+language: android
+jdk: oraclejdk8
+before_install:
+- export JAVA8_HOME=$JAVA_HOME
+- android list sdk --no-ui --all --extended
+android:
+  components:
+  - build-tools-23.0.0
+  - android-23
+  - extra-google-m2repository
+  - extra-android-support
+  - extra-android-m2repository
+  - addon-google_apis-google-22
+  licenses:
+    - '.+'
+script:
+- "./gradlew build -PdisablePreDex"
