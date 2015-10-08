@@ -15,9 +15,9 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 @Module public class VideoPocketModule {
-    @NonNull private final Context mContext;
+    private final Context mContext;
 
-    public VideoPocketModule(@NonNull Context context) {
+    public VideoPocketModule(@NonNull final Context context) {
         mContext = context;
     }
 

@@ -16,15 +16,16 @@ class SharedPreferencesVideoStorage implements VideoStorage {
     private final Resources mResources;
     private final Gson mGson;
 
-    SharedPreferencesVideoStorage(@NonNull final SharedPreferences sharedPreferences, @NonNull final Resources resources, @NonNull Gson gson) {
+    SharedPreferencesVideoStorage(@NonNull final SharedPreferences sharedPreferences, @NonNull final Resources resources, @NonNull final Gson gson) {
         mSharedPreferences = sharedPreferences;
         mResources = resources;
         mGson = gson;
     }
 
-    @Override public List<Video> getVideos() {
+    @Override @NonNull public List<Video> getVideos() {
         final String json = mSharedPreferences.getString(mResources.getString(R.string.pref_key_videos), "[]");
-        return mGson.fromJson(json, new TypeToken<List<Video>>() {}.getType());
+        return mGson.fromJson(json, new TypeToken<List<Video>>() {
+        }.getType());
     }
 
     @Override public void storeVideos(@NonNull final List<Video> videos) {

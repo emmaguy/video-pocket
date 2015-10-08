@@ -35,7 +35,7 @@ class PocketUtils {
     };
 
     public static Intent sendUrlToPocket(Context context, String url) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
+        final Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setPackage(PocketUtils.getPocketPackageName(context));
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_TEXT, url);
@@ -56,7 +56,7 @@ class PocketUtils {
     }
 
     private static boolean isAppInstalled(Context context, String packageName) {
-        PackageManager pm = context.getPackageManager();
+        final PackageManager pm = context.getPackageManager();
         PackageInfo info;
         try {
             info = pm.getPackageInfo(packageName, 0);
