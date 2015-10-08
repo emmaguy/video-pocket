@@ -6,4 +6,10 @@
         android:icon="@drawable/ic_refresh"
         android:title="@string/refresh"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/menu_sort_order"
+        android:icon="@drawable/ic_sort"
+        android:title="@string/sort_order"
+        app:showAsAction="always" />
 </menu>

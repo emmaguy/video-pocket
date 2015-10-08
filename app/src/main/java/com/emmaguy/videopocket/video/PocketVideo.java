@@ -3,10 +3,12 @@ package com.emmaguy.videopocket.video;
 import com.google.gson.annotations.SerializedName;
 
 class PocketVideo {
+    @SerializedName("item_id") private final long mId;
     @SerializedName("resolved_title") private final String mTitle;
     @SerializedName("resolved_url") private final String mUrl;
 
-    PocketVideo(String title, String url) {
+    PocketVideo(long id, String title, String url) {
+        mId = id;
         mTitle = title;
         mUrl = url;
     }
@@ -17,5 +19,9 @@ class PocketVideo {
 
     String getUrl() {
         return mUrl;
+    }
+
+    long getId() {
+        return mId;
     }
 }

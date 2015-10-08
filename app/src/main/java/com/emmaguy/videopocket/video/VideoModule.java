@@ -49,7 +49,7 @@ import timber.log.Timber;
             @Named("io") Scheduler ioScheduler, @Named("ui") Scheduler uiScheduler, Resources resources, UserStorage userStorage, VideoStorage videoStorage) {
         final TypedInput typedInput = buildJson(resources.getString(R.string.pocket_app_id), userStorage);
         final String youTubeApiKey = resources.getString(R.string.youtube_api_key);
-        return new VideoPresenter(pocketApi, youtubeApi, new YouTubeParser(), ioScheduler, uiScheduler, videoStorage, typedInput, youTubeApiKey, YOUTUBE_API_REQUEST_LIMIT);
+        return new VideoPresenter(pocketApi, youtubeApi, new YouTubeParser(), ioScheduler, uiScheduler, videoStorage, userStorage, typedInput, youTubeApiKey, YOUTUBE_API_REQUEST_LIMIT);
     }
 
     @NonNull private TypedInput buildJson(@NonNull final String consumerKey, @NonNull final UserStorage userStorage) {

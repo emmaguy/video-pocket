@@ -5,6 +5,7 @@ import android.support.annotation.NonNull;
 import com.emmaguy.videopocket.BasePresenter;
 import com.emmaguy.videopocket.PresenterView;
 import com.emmaguy.videopocket.StringUtils;
+import com.emmaguy.videopocket.storage.UserStorage;
 import com.emmaguy.videopocket.storage.VideoStorage;
 
 import java.util.ArrayList;
@@ -26,6 +27,8 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
     private final Scheduler mUiScheduler;
 
     private final VideoStorage mVideoStorage;
+    private final UserStorage mUserStorage;
+
     private final TypedInput mRequestTypedInput;
 
     private final String mYouTubeApiKey;
@@ -33,14 +36,17 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
 
     private boolean mIsRetrievingInProgress = false;
 
-    VideoPresenter(@NonNull final PocketApi pocketApi, @NonNull final YouTubeApi youTubeApi, @NonNull final YouTubeParser youTubeParser, @NonNull final Scheduler ioScheduler,
-                   @NonNull final Scheduler uiScheduler, @NonNull final VideoStorage videoStorage, @NonNull final TypedInput requestTypedInput, @NonNull final String youTubeApiKey, final int youTubeRequestLimit) {
+    VideoPresenter(@NonNull final PocketApi pocketApi, @NonNull final YouTubeApi youTubeApi, @NonNull final YouTubeParser youTubeParser,
+                   @NonNull final Scheduler ioScheduler, @NonNull final Scheduler uiScheduler, @NonNull final VideoStorage videoStorage,
+                   @NonNull final UserStorage userStorage, @NonNull final TypedInput requestTypedInput,
+                   @NonNull final String youTubeApiKey, final int youTubeRequestLimit) {
         mPocketApi = pocketApi;
         mYouTubeApi = youTubeApi;
         mYouTubeParser = youTubeParser;
         mIoScheduler = ioScheduler;
         mUiScheduler = uiScheduler;
         mVideoStorage = videoStorage;
+        mUserStorage = userStorage;
         mRequestTypedInput = requestTypedInput;
         mYouTubeApiKey = youTubeApiKey;
         mYouTubeRequestLimit = youTubeRequestLimit;
@@ -68,18 +74,34 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                         .map(videos -> validate(videos, view))
                         .filter(videos -> videos != null))
                 .flatMap(pocketVideos -> filterForYouTubeVideosAndRetrieveDurations(view, pocketVideos))
-                .toSortedList(this::sortVideosByDuration)
+                .toSortedList((video, video2) -> mUserStorage.getSortOrder() == SortOrder.VIDEO_DURATION ? sortVideosByDuration(video, video2) : sortVideosById(video, video2))
                 .doOnNext(mVideoStorage::storeVideos)
                 .observeOn(mUiScheduler)
                 .doOnNext(aVoid -> view.hideLoadingView());
 
-        unsubscribeOnViewDetach(view.refreshActionObservable().startWith(Observable.just(null))
+        unsubscribeOnViewDetach(view.refreshAction().startWith(Observable.just(null))
                 .filter(av -> !mIsRetrievingInProgress)
                 .doOnNext(av -> mIsRetrievingInProgress = true)
                 .flatMap(aVoid -> videoObservable)
                 .doOnNext(av -> mIsRetrievingInProgress = false)
                 .observeOn(mUiScheduler)
                 .subscribe(view::showVideos, throwable -> Timber.e(throwable, "Failed to get videos")));
+
+        unsubscribeOnViewDetach(view.sortOrderChanged()
+                .doOnNext(sortOrder -> view.showLoadingView())
+                .doOnNext(mUserStorage::setSortOrder)
+                .flatMap(sortOrder -> Observable.from(mVideoStorage.getVideos())
+                        .toSortedList((video, video2) -> mUserStorage.getSortOrder() == SortOrder.VIDEO_DURATION ? sortVideosByDuration(video, video2) : sortVideosById(video, video2)))
+                .doOnNext(videos -> view.hideLoadingView())
+                .subscribe(view::showVideos, throwable -> Timber.e(throwable, "Failed to update videos with new sort order")));
+    }
+
+    @NonNull private static <T> List<T> validate(@NonNull final List<T> videos, final View view) {
+        if (videos.isEmpty()) {
+            view.showError();
+        }
+
+        return videos;
     }
 
     @NonNull
@@ -101,19 +123,11 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                 .map(youTubeVideo -> {
                     for (PocketVideo pocketVideo : pocketVideos) {
                         if (pocketVideo.getUrl().contains(youTubeVideo.getId())) {
-                            return new Video(pocketVideo.getTitle(), pocketVideo.getUrl(), youTubeVideo.getDuration());
+                            return new Video(pocketVideo.getId(), pocketVideo.getTitle(), pocketVideo.getUrl(), youTubeVideo.getDuration());
                         }
                     }
                     return null;
                 }).filter(video -> video != null);
-    }
-
-    @NonNull private static <T> List<T> validate(@NonNull final List<T> videos, final View view) {
-        if (videos.isEmpty()) {
-            view.showError();
-        }
-
-        return videos;
     }
 
     private int sortVideosByDuration(@NonNull final Video video, @NonNull final Video video2) {
@@ -125,8 +139,18 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
         return 0;
     }
 
+    private int sortVideosById(@NonNull final Video video, @NonNull final Video video2) {
+        if (video.getId() > video2.getId()) {
+            return -1;
+        } else if (video.getId() < video2.getId()) {
+            return 1;
+        }
+        return 0;
+    }
+
     public interface View extends PresenterView {
-        @NonNull Observable<Void> refreshActionObservable();
+        @NonNull Observable<Void> refreshAction();
+        @NonNull Observable<SortOrder> sortOrderChanged();
 
         void showVideos(final @NonNull List<Video> videos);
 

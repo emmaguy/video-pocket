@@ -3,6 +3,7 @@ package com.emmaguy.videopocket.video;
 import android.support.annotation.NonNull;
 
 import com.emmaguy.videopocket.BasePresenterTest;
+import com.emmaguy.videopocket.storage.UserStorage;
 import com.emmaguy.videopocket.storage.VideoStorage;
 
 import org.junit.Test;
@@ -46,17 +47,20 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     private static final String DEFAULT_TITLE = "blah";
     private static final String DEFAULT_URL = "http://123";
 
+    private final PublishSubject<Void> mOnRefreshActionSubject = PublishSubject.create();
+    private final PublishSubject<SortOrder> mOnSortOrderChangedSubject = PublishSubject.create();
+
+    private final TestScheduler mTestIoScheduler = new TestScheduler();
+
     @Mock private YouTubeParser mYouTubeParser;
     @Mock private VideoStorage mVideoStorage;
+    @Mock private UserStorage mUserStorage;
     @Mock private YouTubeApi mYouTubeApi;
     @Mock private TypedInput mTypedInput;
     @Mock private PocketApi mPocketApi;
 
     @Captor private ArgumentCaptor<List<Video>> mVideos;
     @Captor private ArgumentCaptor<Map<String, String>> mYouTubeApiCaptor;
-
-    private final PublishSubject<Void> mOnRefreshActionSubject = PublishSubject.create();
-    private final TestScheduler mTestIoScheduler = new TestScheduler();
 
     @Override protected VideoPresenter createPresenter() {
         final Observable<Map<String, PocketVideo>> pocketVideosObservable = Observable.just(buildVideosMap());
@@ -65,44 +69,40 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         final Observable<List<YouTubeVideo>> youTubeVideosObservable = Observable.just(Collections.singletonList(new YouTubeVideo(DEFAULT_YOUTUBE_ID, DEFAULT_DURATION)));
         when(mYouTubeApi.videoData(any(), anyString())).thenReturn(youTubeVideosObservable);
 
+        when(mUserStorage.getSortOrder()).thenReturn(SortOrder.VIDEO_DURATION);
         when(mVideoStorage.getVideos()).thenReturn(new ArrayList<>());
 
-        return new VideoPresenter(mPocketApi, mYouTubeApi, mYouTubeParser, mTestIoScheduler, Schedulers.immediate(), mVideoStorage, mTypedInput, "", YOUTUBE_REQUEST_LIMIT);
+        return new VideoPresenter(mPocketApi, mYouTubeApi, mYouTubeParser, mTestIoScheduler, Schedulers.immediate(), mVideoStorage, mUserStorage, mTypedInput, "", YOUTUBE_REQUEST_LIMIT);
     }
 
     @NonNull private Map<String, PocketVideo> buildVideosMap() {
         final Map<String, PocketVideo> map = new HashMap<>();
-        map.put("1", mockPocketVideo());
-        map.put("2", mockPocketYouTubeVideo(DEFAULT_YOUTUBE_ID));
-        map.put("3", mockPocketYouTubeVideo(DEFAULT_YOUTUBE_ID));
+        map.put("1", mockPocketVideo(1));
+        map.put("2", mockPocketYouTubeVideo(DEFAULT_YOUTUBE_ID, 2));
+        map.put("3", mockPocketYouTubeVideo(DEFAULT_YOUTUBE_ID, 3));
         return map;
     }
 
-    @NonNull private PocketVideo mockPocketVideo() {
+    @NonNull private PocketVideo mockPocketVideo(final long id) {
         final PocketVideo mock = mock(PocketVideo.class);
+        when(mock.getId()).thenReturn(id);
         when(mock.getUrl()).thenReturn(DEFAULT_URL);
         when(mock.getTitle()).thenReturn(DEFAULT_TITLE);
         return mock;
     }
 
-    @NonNull private PocketVideo mockPocketYouTubeVideo(final String id) {
-        final PocketVideo mock = mock(PocketVideo.class);
-        final String youTubeId = DEFAULT_URL + "?id=" + id;
-        when(mock.getUrl()).thenReturn(youTubeId);
-        when(mYouTubeParser.getYouTubeId(youTubeId)).thenReturn(id);
-        return mock;
-    }
-
-    @NonNull private YouTubeVideo mockYouTubeVideo(final String id, final Duration duration) {
-        final YouTubeVideo mock = mock(YouTubeVideo.class);
-        when(mock.getId()).thenReturn(id);
-        when(mock.getDuration()).thenReturn(duration);
+    @NonNull private PocketVideo mockPocketYouTubeVideo(final String youTubeId, final long pocketId) {
+        final PocketVideo mock = mockPocketVideo(pocketId);
+        final String youTubeUrl = DEFAULT_URL + "?id=" + youTubeId;
+        when(mock.getUrl()).thenReturn(youTubeUrl);
+        when(mYouTubeParser.getYouTubeId(youTubeUrl)).thenReturn(youTubeId);
         return mock;
     }
 
     @Override protected VideoPresenter.View createView() {
         final VideoPresenter.View view = mock(VideoPresenter.View.class);
-        when(view.refreshActionObservable()).thenReturn(mOnRefreshActionSubject);
+        when(view.refreshAction()).thenReturn(mOnRefreshActionSubject);
+        when(view.sortOrderChanged()).thenReturn(mOnSortOrderChangedSubject);
         return view;
     }
 
@@ -134,7 +134,8 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         verifyNoMoreInteractions(mPocketApi);
         verifyNoMoreInteractions(mYouTubeApi);
 
-        final List<Video> videos = Collections.singletonList(new Video(DEFAULT_TITLE, DEFAULT_URL, Duration.parse(DEFAULT_DURATION)));
+        final Video video = mockVideo(1);
+        final List<Video> videos = Collections.singletonList(video);
         when(mVideoStorage.getVideos()).thenReturn(videos);
 
         verify(mView).hideLoadingView();
@@ -146,13 +147,22 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         verify(mView).showVideos(videos);
     }
 
+    @NonNull private Video mockVideo(final long id) {
+        final Video video = mock(Video.class);
+        when(video.getId()).thenReturn(id);
+        when(video.getTitle()).thenReturn(DEFAULT_TITLE);
+        when(video.getUrl()).thenReturn(DEFAULT_URL);
+        when(video.getDuration()).thenReturn(Duration.parse(DEFAULT_DURATION));
+        return video;
+    }
+
     @Test
     public void onViewAttached_retrievingMoreVideosThanYouTubeAPIRequestLimit_batchesCallsToYouTubeApiButResultsAreEmittedTogether() throws Exception {
         final Map<String, PocketVideo> videos = new HashMap<>();
 
         for (int i = 0; i < 21; i++) {
             final String videoId = "" + (i + 1);
-            videos.put(videoId, mockPocketYouTubeVideo(videoId));
+            videos.put(videoId, mockPocketYouTubeVideo(videoId, i));
         }
         final Observable<Map<String, PocketVideo>> videosObservable = Observable.just(videos);
         when(mPocketApi.videos(mTypedInput)).thenReturn(videosObservable);
@@ -171,13 +181,13 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     @Test
     public void onViewAttached_retrievedVideos_areSortedByDurationAndThoseWithNoDurationAreRemoved() throws Exception {
         final Map<String, PocketVideo> map = new HashMap<>();
-        map.put("0", mockPocketVideo());
-        map.put("1", mockPocketYouTubeVideo("1"));
-        map.put("2", mockPocketYouTubeVideo("2"));
-        map.put("3", mockPocketYouTubeVideo("3"));
-        map.put("4", mockPocketYouTubeVideo("4"));
-        map.put("5", mockPocketYouTubeVideo("5"));
-        map.put("6", mockPocketYouTubeVideo("6"));
+        map.put("0", mockPocketVideo(0));
+        map.put("1", mockPocketYouTubeVideo("1", 1));
+        map.put("2", mockPocketYouTubeVideo("2", 2));
+        map.put("3", mockPocketYouTubeVideo("3", 3));
+        map.put("4", mockPocketYouTubeVideo("4", 4));
+        map.put("5", mockPocketYouTubeVideo("5", 5));
+        map.put("6", mockPocketYouTubeVideo("6", 6));
 
         final Observable<Map<String, PocketVideo>> pocketVideosObservable = Observable.just(map);
         when(mPocketApi.videos(mTypedInput)).thenReturn(pocketVideosObservable);
@@ -203,6 +213,13 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         assertThat(videos.get(2).getDuration(), equalTo(Duration.parse("PT1M")));
         assertThat(videos.get(3).getDuration(), equalTo(Duration.parse("PT2S")));
         assertThat(videos.get(4).getDuration(), equalTo(Duration.parse("PT1S")));
+    }
+
+    @NonNull private YouTubeVideo mockYouTubeVideo(final String id, final Duration duration) {
+        final YouTubeVideo mock = mock(YouTubeVideo.class);
+        when(mock.getId()).thenReturn(id);
+        when(mock.getDuration()).thenReturn(duration);
+        return mock;
     }
 
     @Test
@@ -255,7 +272,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
 
         mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
-        performOnRefreshAction();
+        mOnRefreshActionSubject.onNext(null);
 
         mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
@@ -269,8 +286,8 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         presenterOnViewAttached();
         mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
-        performOnRefreshAction();
-        performOnRefreshAction();
+        mOnRefreshActionSubject.onNext(null);
+        mOnRefreshActionSubject.onNext(null);
 
         mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
@@ -284,7 +301,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         presenterOnViewAttached();
         mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
-        performOnRefreshAction();
+        mOnRefreshActionSubject.onNext(null);
 
         presenterOnViewDetached();
         presenterOnViewAttached();
@@ -299,7 +316,26 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         verify(mView, times(2)).showVideos(any());
     }
 
-    private void performOnRefreshAction() {
-        mOnRefreshActionSubject.onNext(null);
+    @Test public void onSortOrderChanged_re_sortsList() throws Exception {
+        when(mUserStorage.getSortOrder()).thenReturn(SortOrder.TIME_ADDED_TO_POCKET);
+
+        final List<Video> videos = Arrays.asList(mockVideo(4), mockVideo(2), mockVideo(1), mockVideo(3));
+        when(mVideoStorage.getVideos()).thenReturn(videos);
+
+        presenterOnViewAttached();
+        mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        mOnSortOrderChangedSubject.onNext(SortOrder.TIME_ADDED_TO_POCKET);
+
+        mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        verify(mView, times(3)).showVideos(mVideos.capture());
+
+        final List<Video> sortedVideos = mVideos.getValue();
+        assertThat(sortedVideos.size(), equalTo(4));
+        assertThat(sortedVideos.get(0).getId(), equalTo(4l));
+        assertThat(sortedVideos.get(1).getId(), equalTo(3l));
+        assertThat(sortedVideos.get(2).getId(), equalTo(2l));
+        assertThat(sortedVideos.get(3).getId(), equalTo(1l));
     }
 }

@@ -11,4 +11,8 @@
     <string name="refresh">Refresh</string>
     <string name="open_pocket">Open Pocket</string>
     <string name="row_title_format">%1$d. %2$s</string>
+
+    <string name="sort_order">Sort Order</string>
+    <string name="sort_by_duration">Sort by duration</string>
+    <string name="sort_by_time_added_to_pocket">Sort by time added to Pocket</string>
 </resources>
