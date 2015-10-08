@@ -18,7 +18,7 @@ import android.widget.ProgressBar;
 
 import com.emmaguy.videopocket.ActivityComponent;
 import com.emmaguy.videopocket.BaseActivity;
-import com.emmaguy.videopocket.Presenter;
+import com.emmaguy.videopocket.BasePresenter;
 import com.emmaguy.videopocket.R;
 
 import java.util.List;
@@ -57,7 +57,7 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
-    @NonNull @Override protected Presenter<VideoPresenter.View> getPresenter() {
+    @NonNull @Override protected BasePresenter<VideoPresenter.View> getPresenter() {
         return mVideoPocketPresenter;
     }
 

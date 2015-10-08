@@ -3,7 +3,7 @@ package com.emmaguy.videopocket.login;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.emmaguy.videopocket.Presenter;
+import com.emmaguy.videopocket.BasePresenter;
 import com.emmaguy.videopocket.PresenterView;
 import com.emmaguy.videopocket.StringUtils;
 import com.emmaguy.videopocket.storage.UserStorage;
@@ -18,7 +18,7 @@ import rx.Observable;
 import rx.Scheduler;
 import timber.log.Timber;
 
-class LoginPresenter extends Presenter<LoginPresenter.View> {
+class LoginPresenter extends BasePresenter<LoginPresenter.View> {
     private static final String BROWSER_REDIRECT_URL_REQUEST_TOKEN = "https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s&mobile=1";
 
     private final PocketAuthenticationApi mPocketApi;

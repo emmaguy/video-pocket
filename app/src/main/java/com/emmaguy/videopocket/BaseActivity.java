@@ -28,7 +28,7 @@ public abstract class BaseActivity<V extends PresenterView, C extends BaseCompon
     }
 
     @LayoutRes protected abstract int getLayoutId();
-    @NonNull protected abstract Presenter<V> getPresenter();
+    @NonNull protected abstract BasePresenter<V> getPresenter();
     @NonNull protected abstract V getPresenterView();
     @NonNull protected abstract C createComponent(@NonNull ActivityComponent component);
     protected abstract void inject(@NonNull C component);

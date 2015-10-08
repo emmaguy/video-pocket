@@ -12,7 +12,7 @@ import android.widget.ProgressBar;
 
 import com.emmaguy.videopocket.ActivityComponent;
 import com.emmaguy.videopocket.BaseActivity;
-import com.emmaguy.videopocket.Presenter;
+import com.emmaguy.videopocket.BasePresenter;
 import com.emmaguy.videopocket.R;
 import com.emmaguy.videopocket.video.VideoActivity;
 import com.jakewharton.rxbinding.view.RxView;
@@ -43,7 +43,7 @@ public class LoginActivity extends BaseActivity<LoginPresenter.View, LoginCompon
         return R.layout.activity_login;
     }
 
-    @NonNull @Override protected Presenter<LoginPresenter.View> getPresenter() {
+    @NonNull @Override protected BasePresenter<LoginPresenter.View> getPresenter() {
         return mLoginPresenter;
     }
 

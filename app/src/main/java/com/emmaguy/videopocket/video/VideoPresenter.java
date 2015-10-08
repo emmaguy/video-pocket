@@ -2,7 +2,7 @@ package com.emmaguy.videopocket.video;
 
 import android.support.annotation.NonNull;
 
-import com.emmaguy.videopocket.Presenter;
+import com.emmaguy.videopocket.BasePresenter;
 import com.emmaguy.videopocket.PresenterView;
 import com.emmaguy.videopocket.StringUtils;
 import com.emmaguy.videopocket.storage.VideoStorage;
@@ -16,7 +16,7 @@ import rx.Observable;
 import rx.Scheduler;
 import timber.log.Timber;
 
-class VideoPresenter extends Presenter<VideoPresenter.View> {
+class VideoPresenter extends BasePresenter<VideoPresenter.View> {
     private final YouTubeApi mYouTubeApi;
     private final PocketApi mPocketApi;
 

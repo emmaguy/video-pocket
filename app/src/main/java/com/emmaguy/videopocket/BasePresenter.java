@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 import rx.Subscription;
 import rx.subscriptions.CompositeSubscription;
 
-public class Presenter<V extends PresenterView> {
+public class BasePresenter<V extends PresenterView> {
     private CompositeSubscription mSubscriptions;
     private V mView;
 
