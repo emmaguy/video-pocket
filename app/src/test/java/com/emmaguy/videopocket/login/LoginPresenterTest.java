@@ -1,6 +1,6 @@
 package com.emmaguy.videopocket.login;
 
-import com.emmaguy.videopocket.PresenterTest;
+import com.emmaguy.videopocket.BasePresenterTest;
 import com.emmaguy.videopocket.TestUtils;
 import com.emmaguy.videopocket.storage.UserStorage;
 
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class LoginPresenterTest extends PresenterTest<LoginPresenter, LoginPresenter.View> {
+public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginPresenter.View> {
     private static final String DEFAULT_REQUEST_TOKEN = "test_request_token";
     private static final String DEFAULT_ACCESS_TOKEN = "test_access_token";
     private static final String DEFAULT_CONSUMER_KEY = "test_consumer_key";

@@ -2,7 +2,7 @@ package com.emmaguy.videopocket.video;
 
 import android.support.annotation.NonNull;
 
-import com.emmaguy.videopocket.PresenterTest;
+import com.emmaguy.videopocket.BasePresenterTest;
 import com.emmaguy.videopocket.storage.VideoStorage;
 
 import org.junit.Test;
@@ -30,7 +30,6 @@ import rx.subjects.PublishSubject;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyList;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
@@ -40,7 +39,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
-public class VideoPresenterTest extends PresenterTest<VideoPresenter, VideoPresenter.View> {
+public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoPresenter.View> {
     private static final int YOUTUBE_REQUEST_LIMIT = 10;
 
     private static final String DEFAULT_YOUTUBE_ID = "123";
