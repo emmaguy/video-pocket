@@ -24,9 +24,10 @@ import rx.Scheduler;
 import timber.log.Timber;
 
 @Module public class VideoModule {
+    private static final int YOUTUBE_API_REQUEST_LIMIT = 50;
+
     private static final String API_YOUTUBE_URL = "https://www.googleapis.com";
     private static final String API_POCKET_URL = "https://getpocket.com";
-    private static final int YOUTUBE_API_REQUEST_LIMIT = 50;
 
     @Provides PocketApi providePocketApi() {
         return new RestAdapter.Builder()

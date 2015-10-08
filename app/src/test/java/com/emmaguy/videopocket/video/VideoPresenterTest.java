@@ -32,7 +32,6 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -241,40 +240,63 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         verifyZeroInteractions(mYouTubeApi);
     }
 
-    private void attachViewToPresenter() {
-        // Attaching the view triggers a refresh which is tested elsewhere, reset the mock view so we can verify only the behaviour after
+    @Test public void onViewAttached_retrievesLatestVideos() throws Exception {
         presenterOnViewAttached();
-        reset(mView);
+        mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        verify(mView).showLoadingView();
+        verify(mView).hideLoadingView();
+
+        verify(mView).showVideos(any());
     }
 
     @Test public void onRefreshAction_retrievesLatestVideos() throws Exception {
-        attachViewToPresenter();
+        presenterOnViewAttached();
+
         mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
         performOnRefreshAction();
 
-        verify(mView).showLoadingView();
-        verify(mView).hideLoadingView();
+        mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
-        verify(mView).showVideos(any());
+        // times(2) as attaching the view also does 1
+        verify(mView, times(2)).showLoadingView();
+        verify(mView, times(2)).hideLoadingView();
+        verify(mView, times(2)).showVideos(any());
     }
 
     @Test public void onRefreshAction_whenAnotherRefreshIsAlreadyInProgress_isIgnored() throws Exception {
-        attachViewToPresenter();
+        presenterOnViewAttached();
         mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
-        final Observable<Map<String, PocketVideo>> slowApiCall = Observable.just(buildVideosMap())
-                .delay(5, TimeUnit.MILLISECONDS)
-                .doOnCompleted(() -> mTestIoScheduler.advanceTimeBy(5, TimeUnit.MILLISECONDS));
-        when(mPocketApi.videos(mTypedInput)).thenReturn(slowApiCall);
-
         performOnRefreshAction();
         performOnRefreshAction();
 
-        verify(mView).showLoadingView();
-        verify(mView).hideLoadingView();
+        mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
-        verify(mView).showVideos(any());
+        // times(2) as attaching the view also does 1
+        verify(mView, times(2)).showLoadingView();
+        verify(mView, times(2)).hideLoadingView();
+        verify(mView, times(2)).showVideos(any());
+    }
+
+    @Test public void onViewDetachedReattached_whenRequestInProgress_cancelsRequestAndLetsSubsequentRequestOccur() throws Exception {
+        presenterOnViewAttached();
+        mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        performOnRefreshAction();
+
+        presenterOnViewDetached();
+        presenterOnViewAttached();
+
+        mTestIoScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        // times(3) as attaching the view also does 1 and the refresh starts, but is cancelled when the view is detached
+        verify(mView, times(3)).showLoadingView();
+
+        // times(2) as attaching the view also does 1
+        verify(mView, times(2)).hideLoadingView();
+        verify(mView, times(2)).showVideos(any());
     }
 
     private void performOnRefreshAction() {

@@ -50,6 +50,9 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
     public void onViewAttached(@NonNull final View view) {
         super.onViewAttached(view);
 
+        // We unsubscribe when the view is detached
+        mIsRetrievingInProgress = false;
+
         final List<Video> cachedVideos = mVideoStorage.getVideos();
         if (!cachedVideos.isEmpty()) {
             view.showVideos(cachedVideos);
