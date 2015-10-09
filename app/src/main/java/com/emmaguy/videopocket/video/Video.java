@@ -10,7 +10,7 @@ public class Video {
     private final String mUrl;
     private final Duration mDuration;
 
-    Video(@NonNull final long id, @NonNull final String title, final String url, @NonNull final Duration duration) {
+    Video(final long id, @NonNull final String title, final String url, @NonNull final Duration duration) {
         mId = id;
         mTitle = title;
         mUrl = url;

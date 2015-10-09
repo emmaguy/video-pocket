@@ -8,7 +8,7 @@ import retrofit.http.POST;
 import retrofit.mime.TypedInput;
 import rx.Observable;
 
-public interface PocketApi {
+interface PocketApi {
     @POST("/v3/get")
     @Headers({"Content-Type: application/json", "X-Accept: application/json"}) Observable<Map<String, PocketVideo>> videos(@Body TypedInput body);
 }

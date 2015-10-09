@@ -6,7 +6,7 @@ import retrofit.http.POST;
 import retrofit.mime.TypedInput;
 import rx.Observable;
 
-public interface PocketAuthenticationApi {
+interface PocketAuthenticationApi {
     @POST("/v3/oauth/request")
     @Headers({"Content-Type: application/json", "X-Accept: application/json"}) Observable<RequestToken> requestToken(@Body TypedInput body);
 
