@@ -30,7 +30,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     lintOptions {
-        disable 'InvalidPackage', 'UnusedResources', 'IconMissingDensityFolder'
+        disable 'InvalidPackage', 'UnusedResources', 'IconMissingDensityFolder', 'NewApi'
     }
 }
 

@@ -1,18 +1,21 @@
-sudo: false
-language: android
+--- 
+after_failure: 
+  - "cat /home/travis/build/emmaguy/video-pocket/app/build/outputs/lint-results.xml"
+android: 
+  components: 
+    - build-tools-23.0.1
+    - android-23
+    - extra-google-m2repository
+    - extra-android-support
+    - extra-android-m2repository
+    - addon-google_apis-google-23
+  licenses: 
+    - .+
+before_install: 
+  - "export JAVA8_HOME=$JAVA_HOME"
+  - "android list sdk --no-ui --all --extended"
 jdk: oraclejdk8
-before_install:
-- export JAVA8_HOME=$JAVA_HOME
-- android list sdk --no-ui --all --extended
-android:
-  components:
-  - build-tools-23.0.1
-  - android-23
-  - extra-google-m2repository
-  - extra-android-support
-  - extra-android-m2repository
-  - addon-google_apis-google-22
-  licenses:
-    - '.+'
-script:
-- "./gradlew build -PdisablePreDex"
+language: android
+script: 
+  - "./gradlew build -PdisablePreDex"
+sudo: false
