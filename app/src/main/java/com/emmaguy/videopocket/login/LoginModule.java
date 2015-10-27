@@ -13,18 +13,16 @@ import retrofit.RestAdapter;
 import rx.Scheduler;
 
 @Module public class LoginModule {
-    private static final String API_POCKET_URL = "https://getpocket.com";
-
-    @Provides PocketAuthenticationApi providePocketApi() {
+    @Provides PocketAuthenticationApi providePocketApi(Resources resources) {
         return new RestAdapter.Builder()
-                .setEndpoint(API_POCKET_URL)
+                .setEndpoint(resources.getString(R.string.pocket_api))
                 .build()
                 .create(PocketAuthenticationApi.class);
     }
 
     @Provides LoginPresenter provideLoginPresenter(PocketAuthenticationApi pocketApi,
             @Named("io") Scheduler ioScheduler, @Named("ui") Scheduler uiScheduler, Resources resources, UserStorage userStorage) {
-        String callbackUrl = resources.getString(R.string.callback_url_scheme) + "://" + resources.getString(R.string.callback_url_host);
+        final String callbackUrl = resources.getString(R.string.callback_url_scheme) + "://" + resources.getString(R.string.callback_url_host);
         return new LoginPresenter(pocketApi, ioScheduler, uiScheduler, userStorage, resources.getString(R.string.pocket_app_id), callbackUrl);
     }
 }

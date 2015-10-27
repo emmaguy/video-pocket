@@ -17,7 +17,7 @@ class YouTubeVideoConverter implements Converter {
     }
 
     @Override public Object fromBody(TypedInput body, Type type) throws ConversionException {
-        YouTubeVideoResponse response = (YouTubeVideoResponse) mOriginalConverter.fromBody(body, YouTubeVideoResponse.class);
+        final YouTubeVideoResponse response = (YouTubeVideoResponse) mOriginalConverter.fromBody(body, YouTubeVideoResponse.class);
 
         final List<YouTubeVideo> videoInfo = new ArrayList<>();
         for (YouTubeVideoResponse.YouTubeResponse r : response.getItems()) {

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pocket_api">https://getpocket.com</string>
+    <string name="you_tube_api">https://www.googleapis.com</string>
+</resources>

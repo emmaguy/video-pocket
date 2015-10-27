@@ -6,14 +6,10 @@ import android.support.annotation.Nullable;
 import com.emmaguy.videopocket.BasePresenter;
 import com.emmaguy.videopocket.PresenterView;
 import com.emmaguy.videopocket.StringUtils;
+import com.emmaguy.videopocket.Utils;
 import com.emmaguy.videopocket.storage.UserStorage;
-import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
-import java.io.UnsupportedEncodingException;
-
-import retrofit.mime.TypedByteArray;
-import retrofit.mime.TypedInput;
 import rx.Observable;
 import rx.Scheduler;
 import timber.log.Timber;
@@ -49,10 +45,10 @@ class LoginPresenter extends BasePresenter<LoginPresenter.View> {
             return;
         }
 
-        unsubscribeOnViewDetach(view.retrieveRequestTokenObservable()
+        unsubscribeOnViewDetach(view.retrieveRequestToken()
                 .doOnNext(v -> view.showLoadingView())
                 .observeOn(mIoScheduler)
-                .flatMap(v -> Observable.defer(() -> mPocketApi.requestToken(buildJson(new RequestTokenRequestHolder(mConsumerKey, mCallbackUrl)))).onErrorResumeNext(Observable.just(null)))
+                .flatMap(v -> Observable.defer(() -> mPocketApi.requestToken(Utils.buildJson(new RequestTokenRequestHolder(mConsumerKey, mCallbackUrl)))).onErrorResumeNext(Observable.just(null)))
                 .observeOn(mUiScheduler)
                 .map(requestToken -> validRequestTokenOrNull(view, requestToken))
                 .filter(requestToken -> requestToken != null)
@@ -61,10 +57,10 @@ class LoginPresenter extends BasePresenter<LoginPresenter.View> {
                 .doOnNext(url -> view.hideLoadingView())
                 .subscribe(view::startBrowser, throwable -> Timber.d(throwable, "Fatal error getting request token and launching browser in LoginPresenter")));
 
-        unsubscribeOnViewDetach(view.returnFromBrowserObservable()
+        unsubscribeOnViewDetach(view.returnFromBrowser()
                 .doOnNext(v -> view.showLoadingView())
                 .observeOn(mIoScheduler)
-                .flatMap(v -> Observable.defer(() -> mPocketApi.accessToken(buildJson(new AccessTokenRequestHolder(mConsumerKey, mUserStorage.getRequestToken())))).onErrorResumeNext(Observable.just(null)))
+                .flatMap(v -> Observable.defer(() -> mPocketApi.accessToken(Utils.buildJson(new AccessTokenRequestHolder(mConsumerKey, mUserStorage.getRequestToken())))).onErrorResumeNext(Observable.just(null)))
                 .observeOn(mUiScheduler)
                 .map(accessToken -> validAccessTokenOrNull(view, accessToken))
                 .filter(accessToken -> accessToken != null)
@@ -97,16 +93,6 @@ class LoginPresenter extends BasePresenter<LoginPresenter.View> {
         return accessToken;
     }
 
-    @NonNull private TypedInput buildJson(final Object o) {
-        final String json = new Gson().toJson(o);
-        try {
-            return new TypedByteArray("application/json", json.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            Timber.e(e, "Failed to create json");
-            throw new RuntimeException("Failed to build json", e);
-        }
-    }
-
     private static class AccessTokenRequestHolder {
         @SerializedName("consumer_key") final String mConsumerKey;
         @SerializedName("code") final String mCode;
@@ -128,8 +114,8 @@ class LoginPresenter extends BasePresenter<LoginPresenter.View> {
     }
 
     public interface View extends PresenterView {
-        @NonNull Observable<Void> retrieveRequestTokenObservable();
-        @NonNull Observable<Void> returnFromBrowserObservable();
+        @NonNull Observable<Void> retrieveRequestToken();
+        @NonNull Observable<Void> returnFromBrowser();
 
         void showLoadingView();
         void hideLoadingView();

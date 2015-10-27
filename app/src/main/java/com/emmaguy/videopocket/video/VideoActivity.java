@@ -6,11 +6,13 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,6 +25,9 @@ import com.emmaguy.videopocket.BasePresenter;
 import com.emmaguy.videopocket.R;
 import com.emmaguy.videopocket.storage.UserStorage;
 
+import org.threeten.bp.LocalDateTime;
+import org.threeten.bp.ZoneOffset;
+
 import java.util.List;
 
 import javax.inject.Inject;
@@ -32,6 +37,7 @@ import rx.Observable;
 import rx.subjects.PublishSubject;
 
 public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoComponent> implements VideoPresenter.View {
+    private final PublishSubject<Pair<Video, Long>> mArchiveSubject = PublishSubject.create();
     private final PublishSubject<SortOrder> mSortOrderSubject = PublishSubject.create();
     private final PublishSubject<Void> mRefreshSubject = PublishSubject.create();
 
@@ -79,6 +85,23 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
         mRecyclerView.addItemDecoration(new DividerItemDecoration(ContextCompat.getDrawable(this, R.drawable.videos_divider)));
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        final ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.Callback() {
+            @Override public int getMovementFlags(final RecyclerView recyclerView, final RecyclerView.ViewHolder viewHolder) {
+                return makeFlag(ItemTouchHelper.ACTION_STATE_IDLE, ItemTouchHelper.START) | makeFlag(ItemTouchHelper.ACTION_STATE_SWIPE, ItemTouchHelper.START | ItemTouchHelper.END);
+            }
+
+            @Override
+            public boolean onMove(final RecyclerView recyclerView, final RecyclerView.ViewHolder viewHolder, final RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override public void onSwiped(final RecyclerView.ViewHolder viewHolder, final int direction) {
+                final VideoAdapter.ViewHolder holder = (VideoAdapter.ViewHolder) viewHolder;
+                mArchiveSubject.onNext(new Pair<>(mAdapter.getItemAt(holder.getAdapterPosition()), LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)));
+            }
+        });
+        itemTouchHelper.attachToRecyclerView(mRecyclerView);
     }
 
     @Override public boolean onCreateOptionsMenu(final Menu menu) {
@@ -116,6 +139,15 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
 
     @NonNull @Override public Observable<SortOrder> sortOrderChanged() {
         return mSortOrderSubject;
+    }
+
+    @NonNull @Override public Observable<Pair<Video, Long>> archiveAction() {
+        return mArchiveSubject;
+    }
+
+    @Override public void archiveItem(final @NonNull Video video) {
+        Snackbar.make(mViewGroupRoot, R.string.video_moved_to_archive, Snackbar.LENGTH_LONG).show();
+        mAdapter.removeVideo(video);
     }
 
     @Override public void showVideos(@NonNull final List<Video> videos) {

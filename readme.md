@@ -10,8 +10,8 @@ Requires a [consumer key from Pocket](https://getpocket.com/developer/apps/new) 
 Place both of these in a file linked in the project's `gradle.properties` in the following format:
 
 ```ini
-pocket_app_id="yourpocketconsumerkeygoeshere"
-youtube_api_key="youtubeapikeygoeshere"
+pocket_app_id=yourpocketconsumerkeygoeshere
+youtube_api_key=youtubeapikeygoeshere
 ```
 
 The app is packaged by component, there are three component packages:
@@ -26,8 +26,8 @@ The view interface for LoginPresenter looks as follows:
 
 ```java
     public interface View extends PresenterView {
-        @NonNull Observable<Void> retrieveRequestTokenObservable();
-        @NonNull Observable<Void> returnFromBrowserObservable();
+        @NonNull Observable<Void> retrieveRequestToken();
+        @NonNull Observable<Void> returnFromBrowser();
 
         void showLoadingView();
         void hideLoadingView();

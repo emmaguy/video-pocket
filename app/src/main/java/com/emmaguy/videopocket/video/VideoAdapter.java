@@ -3,6 +3,7 @@ package com.emmaguy.videopocket.video;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +19,7 @@ import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 
 class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
     private static final int SECONDS_IN_A_MINUTE = 60;
@@ -26,7 +28,7 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
 
     @Override public ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
         final View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_video, parent, false);
-        return new ViewHolder(view);
+        return new ViewHolder(view, mVideos);
     }
 
     @Override public void onBindViewHolder(final ViewHolder holder, final int position) {
@@ -46,25 +48,41 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
         return mVideos.size();
     }
 
-    public void updateVideos(List<Video> videos) {
+    void updateVideos(@NonNull final List<Video> videos) {
         mVideos.clear();
         mVideos.addAll(videos);
         notifyDataSetChanged();
     }
 
-    class ViewHolder extends RecyclerView.ViewHolder {
+    void removeVideo(final Video video) {
+        final int index = mVideos.indexOf(video);
+        mVideos.remove(index);
+        notifyItemRemoved(index);
+
+        // update the numbering
+        notifyDataSetChanged();
+    }
+
+    Video getItemAt(final int position) {
+        return mVideos.get(position);
+    }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        private final List<Video> mVideos;
+
         @Bind(R.id.videos_title) TextView mTitle;
         @Bind(R.id.videos_duration) TextView mDuration;
-        @Bind(R.id.videos_open_pocket) TextView mOpenPocket;
-        @Bind(R.id.videos_video_container) View mContainer;
 
-        public ViewHolder(final View view) {
+        ViewHolder(@NonNull final View view, @NonNull final List<Video> videos) {
             super(view);
+            mVideos = videos;
 
             ButterKnife.bind(this, view);
+        }
 
-            mContainer.setOnClickListener(v -> view.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(mVideos.get(getAdapterPosition()).getUrl()))));
-            mOpenPocket.setOnClickListener(v -> view.getContext().startActivity(PocketUtils.sendUrlToPocket(view.getContext(), mVideos.get(getAdapterPosition()).getUrl())));
+        @OnClick(R.id.videos_video_item_container) void onViewClicked() {
+            final Video video = mVideos.get(getAdapterPosition());
+            itemView.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(video.getUrl())));
         }
     }
 }

@@ -15,7 +15,10 @@ class VideoConverter implements Converter {
     }
 
     @Override public Object fromBody(TypedInput body, Type type) throws ConversionException {
-        PocketVideoResponse response = (PocketVideoResponse) mOriginalConverter.fromBody(body, PocketVideoResponse.class);
+        if (type == ActionResultResponse.class) {
+            return mOriginalConverter.fromBody(body, ActionResultResponse.class);
+        }
+        final PocketVideoResponse response = (PocketVideoResponse) mOriginalConverter.fromBody(body, PocketVideoResponse.class);
         return response.getList();
     }
 

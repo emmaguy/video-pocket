@@ -1,23 +1,30 @@
 package com.emmaguy.videopocket.video;
 
+import android.content.res.Resources;
 import android.support.annotation.NonNull;
+import android.support.v4.util.Pair;
 
 import com.emmaguy.videopocket.BasePresenter;
 import com.emmaguy.videopocket.PresenterView;
+import com.emmaguy.videopocket.R;
 import com.emmaguy.videopocket.StringUtils;
+import com.emmaguy.videopocket.Utils;
 import com.emmaguy.videopocket.storage.UserStorage;
 import com.emmaguy.videopocket.storage.VideoStorage;
+import com.google.gson.Gson;
+import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import retrofit.mime.TypedInput;
 import rx.Observable;
 import rx.Scheduler;
 import timber.log.Timber;
 
 class VideoPresenter extends BasePresenter<VideoPresenter.View> {
+    private static final int POCKET_ARCHIVE_STATUS_SUCCESS = 1;
+
     private final YouTubeApi mYouTubeApi;
     private final PocketApi mPocketApi;
 
@@ -29,7 +36,7 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
     private final VideoStorage mVideoStorage;
     private final UserStorage mUserStorage;
 
-    private final TypedInput mRequestTypedInput;
+    private final Resources mResources;
 
     private final String mYouTubeApiKey;
     private final int mYouTubeRequestLimit;
@@ -38,7 +45,7 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
 
     VideoPresenter(@NonNull final PocketApi pocketApi, @NonNull final YouTubeApi youTubeApi, @NonNull final YouTubeParser youTubeParser,
                    @NonNull final Scheduler ioScheduler, @NonNull final Scheduler uiScheduler, @NonNull final VideoStorage videoStorage,
-                   @NonNull final UserStorage userStorage, @NonNull final TypedInput requestTypedInput,
+                   @NonNull final UserStorage userStorage, @NonNull final Resources resources,
                    @NonNull final String youTubeApiKey, final int youTubeRequestLimit) {
         mPocketApi = pocketApi;
         mYouTubeApi = youTubeApi;
@@ -47,7 +54,7 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
         mUiScheduler = uiScheduler;
         mVideoStorage = videoStorage;
         mUserStorage = userStorage;
-        mRequestTypedInput = requestTypedInput;
+        mResources = resources;
         mYouTubeApiKey = youTubeApiKey;
         mYouTubeRequestLimit = youTubeRequestLimit;
     }
@@ -64,15 +71,19 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
             view.showVideos(cachedVideos);
         }
 
-        final Observable<List<Video>> videoObservable = Observable.just(mRequestTypedInput)
+        final Observable<List<Video>> videoObservable = Observable.just(Utils.buildJson(new VideosRequestHolder(mResources.getString(R.string.pocket_app_id), mUserStorage.getAccessToken(), "video", "simple")))
                 .observeOn(mUiScheduler)
                 .doOnNext(typedInput -> view.showLoadingView())
                 .observeOn(mIoScheduler)
                 .flatMap(typedInput -> Observable.defer(() -> mPocketApi.videos(typedInput).map(map -> new ArrayList<>(map.values())))
                         .onErrorResumeNext(throwable -> Observable.just(new ArrayList<>()))
                         .observeOn(mUiScheduler)
-                        .map(videos -> validate(videos, view))
-                        .filter(videos -> videos != null))
+                        .doOnNext(pocketVideos -> {
+                            if (pocketVideos.isEmpty()) {
+                                view.showError();
+                            }
+                        })
+                        .filter(pocketVideos -> pocketVideos != null))
                 .flatMap(pocketVideos -> filterForYouTubeVideosAndRetrieveDurations(view, pocketVideos))
                 .toSortedList((video, video2) -> mUserStorage.getSortOrder() == SortOrder.VIDEO_DURATION ? sortVideosByDuration(video, video2) : sortVideosById(video, video2))
                 .doOnNext(mVideoStorage::storeVideos)
@@ -94,14 +105,28 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                         .toSortedList((video, video2) -> mUserStorage.getSortOrder() == SortOrder.VIDEO_DURATION ? sortVideosByDuration(video, video2) : sortVideosById(video, video2)))
                 .doOnNext(videos -> view.hideLoadingView())
                 .subscribe(view::showVideos, throwable -> Timber.e(throwable, "Failed to update videos with new sort order")));
-    }
 
-    @NonNull private static <T> List<T> validate(@NonNull final List<T> videos, final View view) {
-        if (videos.isEmpty()) {
-            view.showError();
-        }
-
-        return videos;
+        unsubscribeOnViewDetach(view.archiveAction()
+                .doOnNext(videoDateTimePair -> view.showLoadingView())
+                .observeOn(mIoScheduler)
+                .flatMap(videoDateTimePair -> Observable.defer(() ->
+                        mPocketApi.archive(mResources.getString(R.string.pocket_app_id), mUserStorage.getAccessToken(), buildArchiveAction(videoDateTimePair.first, videoDateTimePair.second), "")
+                                .map(actionResultResponse -> {
+                                    if (actionResultResponse != null && actionResultResponse.mStatus == POCKET_ARCHIVE_STATUS_SUCCESS) {
+                                        return videoDateTimePair.first;
+                                    }
+                                    return null;
+                                }))
+                        .onErrorResumeNext(throwable -> Observable.just(null)))
+                .observeOn(mUiScheduler)
+                .doOnNext(videoToArchive -> view.hideLoadingView())
+                .filter(videoToArchive -> videoToArchive != null)
+                .doOnNext(videoToArchive -> {
+                    final List<Video> videos = mVideoStorage.getVideos();
+                    videos.remove(videoToArchive);
+                    mVideoStorage.storeVideos(videos);
+                })
+                .subscribe(view::archiveItem));
     }
 
     @NonNull
@@ -116,7 +141,11 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                     return Observable.defer(() -> mYouTubeApi.videoData(map, mYouTubeApiKey)).onErrorResumeNext(throwable -> Observable.just(new ArrayList<>()));
                 })
                 .observeOn(mUiScheduler)
-                .map(youTubeVideos -> validate(youTubeVideos, view))
+                .doOnNext(youTubeVideos -> {
+                    if (youTubeVideos.isEmpty()) {
+                        view.showError();
+                    }
+                })
                 .observeOn(mIoScheduler)
                 .flatMap(Observable::from)
                 .filter(youTubeVideo -> youTubeVideo.getDuration() != null)
@@ -148,15 +177,46 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
         return 0;
     }
 
+    @NonNull private String buildArchiveAction(@NonNull final Video video, final long  now) {
+        return "[" + new Gson().toJson(new ArchiveAction(String.valueOf(video.getId()), now)) + "]";
+    }
+
     public interface View extends PresenterView {
         @NonNull Observable<Void> refreshAction();
         @NonNull Observable<SortOrder> sortOrderChanged();
+        @NonNull Observable<Pair<Video, Long>> archiveAction();
 
+        void archiveItem(final @NonNull Video videoToArchive);
         void showVideos(final @NonNull List<Video> videos);
 
         void showLoadingView();
         void hideLoadingView();
 
         void showError();
+    }
+
+    private static class ArchiveAction {
+        @SerializedName("action") final String mAction = "archive";
+        @SerializedName("item_id") final String mItemId;
+        @SerializedName("time") final long mTime;
+
+        ArchiveAction(@NonNull final String itemId, final long now) {
+            mItemId = itemId;
+            mTime = now;
+        }
+    }
+
+    private static class VideosRequestHolder {
+        @SerializedName("consumer_key") final String mConsumerKey;
+        @SerializedName("access_token") final String mAccessToken;
+        @SerializedName("contentType") final String mContentType;
+        @SerializedName("detailType") final String mDetailType;
+
+        VideosRequestHolder(@NonNull final String consumerKey, @NonNull final String accessToken, @NonNull final String contentType, @NonNull final String detailType) {
+            mConsumerKey = consumerKey;
+            mAccessToken = accessToken;
+            mContentType = contentType;
+            mDetailType = detailType;
+        }
     }
 }

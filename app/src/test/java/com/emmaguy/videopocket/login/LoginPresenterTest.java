@@ -57,8 +57,8 @@ public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginP
 
     @Override protected LoginPresenter.View createView() {
         final LoginPresenter.View view = mock(LoginPresenter.View.class);
-        when(view.retrieveRequestTokenObservable()).thenReturn(mLoginSubject);
-        when(view.returnFromBrowserObservable()).thenReturn(mReturnFromBrowserSubject);
+        when(view.retrieveRequestToken()).thenReturn(mLoginSubject);
+        when(view.returnFromBrowser()).thenReturn(mReturnFromBrowserSubject);
         return view;
     }
 
@@ -78,8 +78,8 @@ public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginP
     public void onViewAttached_whenHasNoAccessToken_subscribesToLoginActionAndReturnFromBrowserAction() throws Exception {
         presenterOnViewAttached();
 
-        verify(mView).retrieveRequestTokenObservable();
-        verify(mView).returnFromBrowserObservable();
+        verify(mView).retrieveRequestToken();
+        verify(mView).returnFromBrowser();
     }
 
     @Test

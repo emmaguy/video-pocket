@@ -84,11 +84,11 @@ public class LoginActivity extends BaseActivity<LoginPresenter.View, LoginCompon
         Snackbar.make(mViewGroupRoot, R.string.failed_to_retrieve_access_token, Snackbar.LENGTH_LONG).show();
     }
 
-    @NonNull @Override public Observable<Void> retrieveRequestTokenObservable() {
+    @NonNull @Override public Observable<Void> retrieveRequestToken() {
         return RxView.clicks(mLoginButton).map(o -> null);
     }
 
-    @NonNull @Override public Observable<Void> returnFromBrowserObservable() {
+    @NonNull @Override public Observable<Void> returnFromBrowser() {
         return mOnReturnedFromBrowserSubject;
     }
 
