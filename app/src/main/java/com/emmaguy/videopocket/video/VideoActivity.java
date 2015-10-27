@@ -1,5 +1,6 @@
 package com.emmaguy.videopocket.video;
 
+import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.Menu;
@@ -36,9 +38,10 @@ import butterknife.Bind;
 import rx.Observable;
 import rx.subjects.PublishSubject;
 
-public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoComponent> implements VideoPresenter.View {
+public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoComponent> implements VideoPresenter.View, SearchView.OnQueryTextListener {
     private final PublishSubject<Pair<Video, Long>> mArchiveSubject = PublishSubject.create();
     private final PublishSubject<SortOrder> mSortOrderSubject = PublishSubject.create();
+    private final PublishSubject<String> mSearchQuerySubject = PublishSubject.create();
     private final PublishSubject<Void> mRefreshSubject = PublishSubject.create();
 
     @Inject VideoPresenter mVideoPocketPresenter;
@@ -47,7 +50,7 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     @Bind(R.id.video_viewgroup_root) ViewGroup mViewGroupRoot;
     @Bind(R.id.video_recycler_view) RecyclerView mRecyclerView;
     @Bind(R.id.video_progressbar) ProgressBar mProgressBar;
-    @Bind(R.id.video_toolbar) Toolbar mToolbar;
+    @Bind(R.id.toolbar) Toolbar mToolbar;
 
     private VideoAdapter mAdapter;
 
@@ -107,6 +110,16 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     @Override public boolean onCreateOptionsMenu(final Menu menu) {
         super.onCreateOptionsMenu(menu);
         getMenuInflater().inflate(R.menu.menu_video, menu);
+
+        final MenuItem searchItem = menu.findItem(R.id.menu_search);
+        if (searchItem != null) {
+            final SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+            final SearchView searchView = (SearchView) searchItem.getActionView();
+            searchView.setQueryHint(getString(R.string.search_hint));
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+            searchView.setOnQueryTextListener(this);
+        }
+
         return true;
     }
 
@@ -137,6 +150,10 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
         return mRefreshSubject;
     }
 
+    @NonNull @Override public Observable<String> searchQueryChanged() {
+        return mSearchQuerySubject;
+    }
+
     @NonNull @Override public Observable<SortOrder> sortOrderChanged() {
         return mSortOrderSubject;
     }
@@ -163,6 +180,15 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     }
 
     @Override public void showError() {
-        Snackbar.make(mViewGroupRoot, R.string.error_generic_refresh, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(mViewGroupRoot, R.string.something_went_wrong_whilst_refreshing, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override public boolean onQueryTextSubmit(final String query) {
+        return true;
+    }
+
+    @Override public boolean onQueryTextChange(final String newText) {
+        mSearchQuerySubject.onNext(newText);
+        return true;
     }
 }

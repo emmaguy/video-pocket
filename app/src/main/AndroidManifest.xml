@@ -31,7 +31,12 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".video.VideoActivity" />
+        <activity
+            android:name=".video.VideoActivity">
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/videos_searchable" />
+        </activity>
 
     </application>
 

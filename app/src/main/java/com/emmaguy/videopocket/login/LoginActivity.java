@@ -30,8 +30,8 @@ public class LoginActivity extends BaseActivity<LoginPresenter.View, LoginCompon
 
     @Bind(R.id.login_viewgroup_root) ViewGroup mViewGroupRoot;
     @Bind(R.id.login_progress_bar) ProgressBar mProgressBar;
-    @Bind(R.id.login_toolbar) Toolbar mToolbar;
     @Bind(R.id.login_button) Button mLoginButton;
+    @Bind(R.id.toolbar) Toolbar mToolbar;
 
     @Override protected void onViewCreated(Bundle savedInstanceState) {
         super.onViewCreated(savedInstanceState);

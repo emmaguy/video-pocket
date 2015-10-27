@@ -52,6 +52,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
 
     private final PublishSubject<Pair<Video, Long>> mArchiveActionSubject = PublishSubject.create();
     private final PublishSubject<SortOrder> mSortOrderChangedSubject = PublishSubject.create();
+    private final PublishSubject<String> mSearchQuerySubject = PublishSubject.create();
     private final PublishSubject<Void> mRefreshActionSubject = PublishSubject.create();
 
     private final TestScheduler mTestIoScheduler = new TestScheduler();
@@ -84,6 +85,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         when(view.refreshAction()).thenReturn(mRefreshActionSubject);
         when(view.sortOrderChanged()).thenReturn(mSortOrderChangedSubject);
         when(view.archiveAction()).thenReturn(mArchiveActionSubject);
+        when(view.searchQueryChanged()).thenReturn(mSearchQuerySubject);
         return view;
     }
 
@@ -343,6 +345,27 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         assertThat(sortedVideos.get(1).getId(), equalTo(3l));
         assertThat(sortedVideos.get(2).getId(), equalTo(2l));
         assertThat(sortedVideos.get(3).getId(), equalTo(1l));
+    }
+
+    @Test public void onSearchQueryChanged_videosAreFilteredCaseInsensitive() throws Exception {
+        presenterOnViewAttached();
+
+        final Video videoThatMatches = mockVideo(1);
+        when(videoThatMatches.getTitle()).thenReturn("test");
+
+        final Video videoThatDoesntMatch = mockVideo(2);
+        when(videoThatDoesntMatch.getTitle()).thenReturn("nonmatch");
+
+        final List<Video> value = Arrays.asList(videoThatDoesntMatch, videoThatMatches);
+        when(mVideoStorage.getVideos()).thenReturn(value);
+
+        mSearchQuerySubject.onNext("TE");
+
+        verify(mView).showVideos(mVideos.capture());
+
+        final List<Video> sortedVideos = mVideos.getValue();
+        assertThat(sortedVideos.size(), equalTo(1));
+        assertThat(sortedVideos.get(0).getTitle(), equalTo("test"));
     }
 
     @Test public void onArchiveAction_whenArchiveIsSuccessful_archiveItemOnViewAndUpdatesCache() throws Exception {

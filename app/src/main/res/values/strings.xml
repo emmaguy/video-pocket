@@ -7,12 +7,15 @@
     <string name="failed_to_retrieve_request_token">Failed to retrieve request token from Pocket. Please check your internet connection and try again.</string>
     <string name="failed_to_retrieve_access_token">Failed to retrieve access token from Pocket. Please try again.</string>
 
-    <string name="error_generic_refresh">Something went wrong whilst refreshing</string>
+    <string name="something_went_wrong_whilst_refreshing">Something went wrong whilst refreshing</string>
+
+    <string name="search_hint">Search within video titles</string>
     <string name="refresh">Refresh</string>
-    <string name="archive">Archive</string>
+    <string name="search">Search</string>
+    <string name="sort_order">Sort Order</string>
+
     <string name="row_title_format">%1$d. %2$s</string>
 
-    <string name="sort_order">Sort Order</string>
     <string name="sort_by_duration">Sort by duration</string>
     <string name="sort_by_time_added_to_pocket">Sort by time added to Pocket</string>
     <string name="video_moved_to_archive">Video moved to Archive</string>

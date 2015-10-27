@@ -10,24 +10,33 @@
         <item name="android:colorPrimaryDark" tools:targetApi="lollipop">@color/primary_dark</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
 
-        <item name="android:theme">@style/Theme</item>
+        <item name="android:theme">@style/AppThemeToolbar</item>
     </style>
 
+    <style name="AppThemeToolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+        <item name="android:colorControlHighlight" tools:targetApi="lollipop">@color/accent</item>
+        <item name="colorControlHighlight">@color/accent</item>
+
+        <item name="android:textColorPrimary">@android:color/white</item>
+
+        <item name="searchViewStyle">@style/AppThemeSearchView</item>
+    </style>
+
+    <style name="AppThemeSearchView" parent="Widget.AppCompat.SearchView">
+        <item name="searchIcon">@drawable/ic_search</item>
+    </style>
+
+    <!-- Dialog styling -->
     <style name="AppThemeDialog" parent="Theme.AppCompat.Light.Dialog.Alert">
         <item name="android:colorAccent" tools:targetApi="lollipop">@color/accent</item>
         <item name="colorAccent">@color/accent</item>
 
-        <item name="android:windowTitleStyle">@style/AppThemeDialogTextStyle</item>
+        <item name="android:windowTitleStyle">@style/AppThemeDialogText</item>
     </style>
 
-    <style name="AppThemeDialogTextStyle">
+    <style name="AppThemeDialogText">
         <item name="android:textColor">@color/primary_text</item>
         <item name="android:textAppearance">@style/TextAppearance.AppCompat.Title</item>
-    </style>
-
-    <style name="Theme" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
-        <item name="android:colorControlHighlight" tools:targetApi="lollipop">@color/primary</item>
-        <item name="colorControlHighlight">@color/primary</item>
     </style>
 
 </resources>

@@ -127,6 +127,13 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                     mVideoStorage.storeVideos(videos);
                 })
                 .subscribe(view::archiveItem));
+
+        unsubscribeOnViewDetach(view.searchQueryChanged()
+                .flatMap(searchQuery -> Observable.from(mVideoStorage.getVideos())
+                        .filter(video -> video.getTitle().toLowerCase().contains(searchQuery.toLowerCase()))
+                        .toList())
+                .observeOn(mUiScheduler)
+                .subscribe(view::showVideos, throwable -> Timber.e(throwable, "Failed to filter videos on search query")));
     }
 
     @NonNull
@@ -183,6 +190,7 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
 
     public interface View extends PresenterView {
         @NonNull Observable<Void> refreshAction();
+        @NonNull Observable<String> searchQueryChanged();
         @NonNull Observable<SortOrder> sortOrderChanged();
         @NonNull Observable<Pair<Video, Long>> archiveAction();
 
