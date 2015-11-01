@@ -2,6 +2,9 @@ package com.emmaguy.videopocket;
 
 import android.support.annotation.CallSuper;
 
+import com.emmaguy.videopocket.common.base.BasePresenter;
+import com.emmaguy.videopocket.common.base.PresenterView;
+
 import org.junit.Before;
 
 import static org.mockito.MockitoAnnotations.initMocks;

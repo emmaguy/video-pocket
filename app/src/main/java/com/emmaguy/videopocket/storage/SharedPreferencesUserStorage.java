@@ -5,7 +5,7 @@ import android.content.res.Resources;
 import android.support.annotation.NonNull;
 
 import com.emmaguy.videopocket.R;
-import com.emmaguy.videopocket.video.SortOrder;
+import com.emmaguy.videopocket.feature.video.SortOrder;
 
 class SharedPreferencesUserStorage implements UserStorage {
     private final SharedPreferences mSharedPreferences;

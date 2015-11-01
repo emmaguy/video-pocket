@@ -13,7 +13,7 @@
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".login.LoginActivity"
+            android:name=".feature.login.LoginActivity"
             android:noHistory="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,7 +32,7 @@
         </activity>
 
         <activity
-            android:name=".video.VideoActivity">
+            android:name=".feature.video.VideoActivity">
             <meta-data
                 android:name="android.app.searchable"
                 android:resource="@xml/videos_searchable" />

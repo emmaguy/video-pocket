@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.support.annotation.NonNull;
 
+import com.emmaguy.videopocket.common.base.BaseComponent;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 import java.util.HashMap;
@@ -11,7 +12,7 @@ import java.util.Map;
 
 import timber.log.Timber;
 
-public class VideoPocketApplication extends Application {
+public final class VideoPocketApplication extends Application {
     private final Map<String, ? super BaseComponent> mComponents = new HashMap<>();
     private VideoPocketComponent mComponent;
 

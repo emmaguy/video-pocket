@@ -1,6 +1,6 @@
 package com.emmaguy.videopocket.storage;
 
-import com.emmaguy.videopocket.video.SortOrder;
+import com.emmaguy.videopocket.feature.video.SortOrder;
 
 public interface UserStorage {
     String getUsername();

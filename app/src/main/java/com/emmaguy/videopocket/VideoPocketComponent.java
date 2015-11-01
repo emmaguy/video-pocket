@@ -1,5 +1,8 @@
 package com.emmaguy.videopocket;
 
+import com.emmaguy.videopocket.common.base.BaseComponent;
+import com.emmaguy.videopocket.feature.ActivityComponent;
+import com.emmaguy.videopocket.feature.ActivityModule;
 import com.emmaguy.videopocket.storage.StorageModule;
 
 import javax.inject.Singleton;

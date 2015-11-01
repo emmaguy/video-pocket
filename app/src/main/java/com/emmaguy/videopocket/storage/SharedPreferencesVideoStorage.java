@@ -5,7 +5,7 @@ import android.content.res.Resources;
 import android.support.annotation.NonNull;
 
 import com.emmaguy.videopocket.R;
-import com.emmaguy.videopocket.video.Video;
+import com.emmaguy.videopocket.feature.video.Video;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 

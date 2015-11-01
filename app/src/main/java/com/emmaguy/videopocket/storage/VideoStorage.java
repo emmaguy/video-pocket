@@ -2,7 +2,7 @@ package com.emmaguy.videopocket.storage;
 
 import android.support.annotation.NonNull;
 
-import com.emmaguy.videopocket.video.Video;
+import com.emmaguy.videopocket.feature.video.Video;
 
 import java.util.List;
 
