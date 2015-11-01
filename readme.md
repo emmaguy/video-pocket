@@ -44,7 +44,7 @@ Methods starting with `show` are updating the UI, those starting with `start` wi
 
 Observables are exposed on this interface from the view, allowing the Presenters to subscribe to them in their lifecycle method, onViewAttached. A CompositeSubscription lives in the base class of Presenter, each subscription is added to this composite via the method `unsubscribeOnViewDetach`, which will unsubscribe from all subscriptions when the view is detached.
 
-Presenters are injected into their views using Dagger. Supports device rotation with an in-memory cache of Dagger Components on the Application.
+Presenters are injected into their views using Dagger. Supports device rotation with an in-memory cache of Dagger Components on the Application, handled by `BaseApplication`.
 
 Unit tested to verify a reasonable number of possible scenarios:
  - successful retrieval and sorting of videos by their duration
