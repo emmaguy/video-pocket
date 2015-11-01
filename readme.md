@@ -1,62 +1,75 @@
-Video Pocket
-============
+# Video Pocket
 
 Download your saved videos from Pocket, get their durations from the YouTube API, sort and show to the user. An experiment with RxJava + MVP.
 
 <img src="video-pocket-ui.png" width="30%" />
 
+## Setup
+
 Requires a [consumer key from Pocket](https://getpocket.com/developer/apps/new) and an [API key from YouTube](https://developers.google.com/youtube/registering_an_application?hl=en). 
 
-Place both of these in a file linked in the project's `gradle.properties` in the following format:
+Place both of these in a file on your local machine, and link it via the property `app.properties` which can be found in the project's `gradle.properties`.
 
+Expected file format:
 ```ini
 pocket_app_id=yourpocketconsumerkeygoeshere
 youtube_api_key=youtubeapikeygoeshere
 ```
 
-The app is packaged by component, there are three component packages:
+## Architecture
 
- - login, which is responsible for getting the user authenticated with Pocket, so we can retrieve their videos
- - video, which retrieves the list of saved videos from Pocket and their YouTube durations
- - storage, which contains the classes which persist user info (e.g. access token) and video info (a cached list of videos from Pocket)
+The app is packaged by component/feature, under the `com.emmaguy.videopocket.feature` package, to keep everything as private as possible. The components currently map 1-1 to Activities, but could easily use custom views instead.
 
-The two presenters, VideoPresenter and LoginPresenter communicate with their views via an interface defined internally, which is implemented by their respective Activities.
+Each component consists of a `Presenter` class, a `View` interface which the corresponding `Activity` implements and a Dagger `Module`/`Component` for dependencies. 
 
-The view interface for LoginPresenter looks as follows:
-
+The `View` interface enables the `Presenter` to be pure Java and not have to know about anything Android:
 ```java
     public interface View extends PresenterView {
         @NonNull Observable<Void> retrieveRequestToken();
-        @NonNull Observable<Void> returnFromBrowser();
 
         void showLoadingView();
         void hideLoadingView();
 
-        void showRequestTokenError();
-        void showAccessTokenError();
-
-        void startBrowser(final @NonNull String url);
-        void startVideos();
+        void startBrowser(@NonNull final String url);
     }
 ```
 
-Methods starting with `show` are updating the UI, those starting with `start` will start another Activity.
+The interface exposes:
+ - actions that the user can perform e.g. clicking a button, swiping, etc. (these are the methods that return `Observable<Object>`) 
+    - we subscribe to each of these in the `Presenter`'s one lifecycle method, `onViewAttached`
+    - each subscription is added to a `CompositeSubscription` via the method `unsubscribeOnViewDetach`, which will unsubscribe from all subscriptions when the view is detached
+    - we limit what the `Presenter` is exposed to by using a return type of `Observable<Void>`, often it's enough just to know the action has happened
+- actions which immediately update the view with a simple operation e.g. show or hide a progress bar (method name will usually starts with `show`/`hide`) 
+- actions that start another Activity (prefixed with `start` e.g. `startBrowser`)
 
-Observables are exposed on this interface from the view, allowing the Presenters to subscribe to them in their lifecycle method, onViewAttached. A CompositeSubscription lives in the base class of Presenter, each subscription is added to this composite via the method `unsubscribeOnViewDetach`, which will unsubscribe from all subscriptions when the view is detached.
+`Presenter`s are injected into their views using Dagger. Supports device rotation with an in-memory cache of Dagger Components on the Application, handled by `BaseApplication`.
 
-Presenters are injected into their views using Dagger. Supports device rotation with an in-memory cache of Dagger Components on the Application, handled by `BaseApplication`.
+There are currently two components:
+ - login, which is responsible for getting the user authenticated with Pocket, so we can retrieve their videos
+ - video, which retrieves the list of saved videos from Pocket and their YouTube durations
 
-Unit tested to verify a reasonable number of possible scenarios:
- - successful retrieval and sorting of videos by their duration
- - updating the cache happens
- - if either network call fails, we hide the spinner and show error state
- - if Pocket API returns more videos than the YouTube API allows at once, that these requests are successfully batched
- - if subsequent refresh calls are discarded whilst one is in progress (if the user sitting there mashing the refresh button)
+Additionally, there is a 'storage' package, which contains the classes which persist user information (e.g. access token) and video information (a cached list of videos from Pocket).
+
+## Benefits
+
+This setup has a number of advantages over a non-MVP app architecture
+ - it separates our concerns
+    - the `Presenter` is view agnostic and does not care how an action was triggered
+    - the view which implements the `View` interface is very simple - the methods are usually one liners, doing something on the android `Activity` e.g. just setting a view's state to `View.GONE`
+ - it allows us to place all our business logic within the `Presenter` object and abstracts the `View` for easy mocking, so we can unit test ALL THE THINGS, e.g: 
+    - when we're doing a network request, does the loading indicator show when it starts, and hide when it ends?
+    - are we ignoring clicks on the 'refresh' button when a network call doing a refresh is already in progress?
+    - what happens when a network call fails?
+    - is the cache being properly updated when we successfully retrieve data?
+    - are we batching our requests correctly?
+    - do we sort the videos correctly based on duration or time added to Pocket?
+    - when a user uses the search feature, do the videos get filtered correctly?
+    - ... etc 
+ 
 
 [![Build Status](https://travis-ci.org/emmaguy/video-pocket.svg)](https://travis-ci.org/emmaguy/video-pocket)
 
-License
---------
+# License
 
     Copyright 2015 Emma Guy
 
