@@ -10,24 +10,24 @@ import org.junit.Before;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 public abstract class BasePresenterTest<P extends BasePresenter<V>, V extends PresenterView> {
-    protected P mPresenter;
-    protected V mView;
+    protected P presenter;
+    protected V view;
 
     @CallSuper @Before public void before() {
         initMocks(this);
 
-        mPresenter = createPresenter();
-        mView = createView();
+        presenter = createPresenter();
+        view = createView();
     }
 
     protected abstract P createPresenter();
     protected abstract V createView();
 
     protected void presenterOnViewAttached() {
-        mPresenter.onViewAttached(mView);
+        presenter.onViewAttached(view);
     }
 
     protected void presenterOnViewDetached() {
-        mPresenter.onViewDetached();
+        presenter.onViewDetached();
     }
 }

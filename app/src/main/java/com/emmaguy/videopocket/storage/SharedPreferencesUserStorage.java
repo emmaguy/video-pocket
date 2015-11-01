@@ -8,55 +8,55 @@ import com.emmaguy.videopocket.R;
 import com.emmaguy.videopocket.feature.video.SortOrder;
 
 class SharedPreferencesUserStorage implements UserStorage {
-    private final SharedPreferences mSharedPreferences;
-    private final Resources mResources;
+    private final SharedPreferences sharedPreferences;
+    private final Resources resources;
 
     SharedPreferencesUserStorage(@NonNull final SharedPreferences sharedPreferences, @NonNull final Resources resources) {
-        mSharedPreferences = sharedPreferences;
-        mResources = resources;
+        this.sharedPreferences = sharedPreferences;
+        this.resources = resources;
     }
 
     @Override @NonNull public String getUsername() {
-        return mSharedPreferences.getString(mResources.getString(R.string.pref_key_username), "");
+        return sharedPreferences.getString(resources.getString(R.string.pref_key_username), "");
     }
 
     @Override public void storeUsername(final String username) {
-        mSharedPreferences
+        sharedPreferences
                 .edit()
-                .putString(mResources.getString(R.string.pref_key_username), username)
+                .putString(resources.getString(R.string.pref_key_username), username)
                 .apply();
     }
 
     @Override @NonNull public String getAccessToken() {
-        return mSharedPreferences.getString(mResources.getString(R.string.pref_key_access_token), "");
+        return sharedPreferences.getString(resources.getString(R.string.pref_key_access_token), "");
     }
 
     @Override public void storeAccessToken(final String accessToken) {
-        mSharedPreferences
+        sharedPreferences
                 .edit()
-                .putString(mResources.getString(R.string.pref_key_access_token), accessToken)
+                .putString(resources.getString(R.string.pref_key_access_token), accessToken)
                 .apply();
     }
 
     @Override @NonNull public String getRequestToken() {
-        return mSharedPreferences.getString(mResources.getString(R.string.pref_key_request_token), "");
+        return sharedPreferences.getString(resources.getString(R.string.pref_key_request_token), "");
     }
 
     @Override public void storeRequestToken(final String requestTokenCode) {
-        mSharedPreferences
+        sharedPreferences
                 .edit()
-                .putString(mResources.getString(R.string.pref_key_request_token), requestTokenCode)
+                .putString(resources.getString(R.string.pref_key_request_token), requestTokenCode)
                 .apply();
     }
 
     @Override public SortOrder getSortOrder() {
-        return SortOrder.fromIndex(mSharedPreferences.getInt(mResources.getString(R.string.pref_key_sort_order), SortOrder.VIDEO_DURATION.getIndex()));
+        return SortOrder.fromIndex(sharedPreferences.getInt(resources.getString(R.string.pref_key_sort_order), SortOrder.VIDEO_DURATION.getIndex()));
     }
 
     @Override public void setSortOrder(final SortOrder sortOrder) {
-        mSharedPreferences
+        sharedPreferences
                 .edit()
-                .putInt(mResources.getString(R.string.pref_key_sort_order), sortOrder.getIndex())
+                .putInt(resources.getString(R.string.pref_key_sort_order), sortOrder.getIndex())
                 .apply();
     }
 }

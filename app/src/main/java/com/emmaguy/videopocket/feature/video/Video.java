@@ -5,31 +5,31 @@ import android.support.annotation.NonNull;
 import org.threeten.bp.Duration;
 
 public class Video {
-    private final long mId;
-    private final String mTitle;
-    private final String mUrl;
-    private final Duration mDuration;
+    private final long id;
+    private final String title;
+    private final String url;
+    private final Duration duration;
 
-    Video(final long id, @NonNull final String title, final String url, @NonNull final Duration duration) {
-        mId = id;
-        mTitle = title;
-        mUrl = url;
-        mDuration = duration;
+    Video(final long id, @NonNull final String title, @NonNull final String url, @NonNull final Duration duration) {
+        this.id = id;
+        this.title = title;
+        this.url = url;
+        this.duration = duration;
     }
 
     long getId() {
-        return mId;
+        return id;
     }
 
     @NonNull String getTitle() {
-        return mTitle;
+        return title;
     }
 
     @NonNull String getUrl() {
-        return mUrl;
+        return url;
     }
 
     @NonNull Duration getDuration() {
-        return mDuration;
+        return duration;
     }
 }

@@ -24,17 +24,17 @@ import butterknife.OnClick;
 class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
     private static final int SECONDS_IN_A_MINUTE = 60;
 
-    private final List<Video> mVideos = new ArrayList<>();
+    private final List<Video> videos = new ArrayList<>();
 
     @Override public ViewHolder onCreateViewHolder(final ViewGroup parent, final int viewType) {
         final View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_video, parent, false);
-        return new ViewHolder(view, mVideos);
+        return new ViewHolder(view, videos);
     }
 
     @Override public void onBindViewHolder(final ViewHolder holder, final int position) {
         final Resources resources = holder.mTitle.getResources();
 
-        final Video video = mVideos.get(position);
+        final Video video = videos.get(position);
         holder.mTitle.setText(resources.getString(R.string.row_title_format, position + 1, video.getTitle()));
 
         final Duration duration = video.getDuration();
@@ -45,18 +45,18 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
     }
 
     @Override public int getItemCount() {
-        return mVideos.size();
+        return videos.size();
     }
 
     void updateVideos(@NonNull final List<Video> videos) {
-        mVideos.clear();
-        mVideos.addAll(videos);
+        this.videos.clear();
+        this.videos.addAll(videos);
         notifyDataSetChanged();
     }
 
     void removeVideo(final Video video) {
-        final int index = mVideos.indexOf(video);
-        mVideos.remove(index);
+        final int index = videos.indexOf(video);
+        videos.remove(index);
         notifyItemRemoved(index);
 
         // update the numbering
@@ -64,7 +64,7 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
     }
 
     Video getItemAt(final int position) {
-        return mVideos.get(position);
+        return videos.get(position);
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

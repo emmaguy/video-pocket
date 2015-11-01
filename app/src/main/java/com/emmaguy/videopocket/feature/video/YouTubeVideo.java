@@ -1,21 +1,23 @@
 package com.emmaguy.videopocket.feature.video;
 
+import android.support.annotation.NonNull;
+
 import org.threeten.bp.Duration;
 
 class YouTubeVideo {
-    private final String mId;
-    private final Duration mDuration;
+    private final String id;
+    private final Duration duration;
 
-    YouTubeVideo(String id, String duration) {
-        mId = id;
-        mDuration = Duration.parse(duration);
+    YouTubeVideo(@NonNull final String id, @NonNull final String duration) {
+        this.id = id;
+        this.duration = Duration.parse(duration);
     }
 
-    public String getId() {
-        return mId;
+    @NonNull public String getId() {
+        return id;
     }
 
-    public Duration getDuration() {
-        return mDuration;
+    @NonNull public Duration getDuration() {
+        return duration;
     }
 }

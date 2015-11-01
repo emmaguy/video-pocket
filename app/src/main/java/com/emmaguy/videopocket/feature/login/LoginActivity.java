@@ -24,19 +24,19 @@ import rx.Observable;
 import rx.subjects.BehaviorSubject;
 
 public class LoginActivity extends BaseActivity<LoginPresenter.View, LoginComponent> implements LoginPresenter.View {
-    private final BehaviorSubject<Void> mOnReturnedFromBrowserSubject = BehaviorSubject.create();
+    private final BehaviorSubject<Void> returnedFromBrowserSubject = BehaviorSubject.create();
 
-    @Inject LoginPresenter mLoginPresenter;
+    @Inject LoginPresenter loginPresenter;
 
-    @Bind(R.id.login_viewgroup_root) ViewGroup mViewGroupRoot;
-    @Bind(R.id.login_progress_bar) ProgressBar mProgressBar;
-    @Bind(R.id.login_button) Button mLoginButton;
-    @Bind(R.id.toolbar) Toolbar mToolbar;
+    @Bind(R.id.login_viewgroup_root) ViewGroup rootViewGroup;
+    @Bind(R.id.login_progress_bar) ProgressBar progressBar;
+    @Bind(R.id.login_button) Button loginButton;
+    @Bind(R.id.toolbar) Toolbar toolbar;
 
     @Override protected void onViewCreated(Bundle savedInstanceState) {
         super.onViewCreated(savedInstanceState);
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
     }
 
     @Override protected int getLayoutId() {
@@ -44,18 +44,18 @@ public class LoginActivity extends BaseActivity<LoginPresenter.View, LoginCompon
     }
 
     @NonNull @Override protected BasePresenter<LoginPresenter.View> getPresenter() {
-        return mLoginPresenter;
+        return loginPresenter;
     }
 
     @NonNull @Override protected LoginPresenter.View getPresenterView() {
         return this;
     }
 
-    @NonNull @Override protected LoginComponent createComponent(@NonNull ActivityComponent component) {
+    @NonNull @Override protected LoginComponent createComponent(@NonNull final ActivityComponent component) {
         return component.plus(new LoginModule());
     }
 
-    @Override protected void inject(@NonNull LoginComponent component) {
+    @Override protected void inject(@NonNull final LoginComponent component) {
         component.inject(this);
     }
 
@@ -64,36 +64,36 @@ public class LoginActivity extends BaseActivity<LoginPresenter.View, LoginCompon
 
         final Uri uri = getIntent().getData();
         if (uri != null && uri.toString().startsWith(getString(R.string.callback_url_scheme))) {
-            mOnReturnedFromBrowserSubject.onNext(null);
+            returnedFromBrowserSubject.onNext(null);
         }
     }
 
     @Override public void showLoadingView() {
-        mProgressBar.setVisibility(android.view.View.VISIBLE);
+        progressBar.setVisibility(android.view.View.VISIBLE);
     }
 
     @Override public void hideLoadingView() {
-        mProgressBar.setVisibility(android.view.View.GONE);
+        progressBar.setVisibility(android.view.View.GONE);
     }
 
     @Override public void showRequestTokenError() {
-        Snackbar.make(mViewGroupRoot, R.string.failed_to_retrieve_request_token, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(rootViewGroup, R.string.failed_to_retrieve_request_token, Snackbar.LENGTH_LONG).show();
     }
 
     @Override public void showAccessTokenError() {
-        Snackbar.make(mViewGroupRoot, R.string.failed_to_retrieve_access_token, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(rootViewGroup, R.string.failed_to_retrieve_access_token, Snackbar.LENGTH_LONG).show();
     }
 
     @NonNull @Override public Observable<Void> retrieveRequestToken() {
-        return RxView.clicks(mLoginButton).map(o -> null);
+        return RxView.clicks(loginButton).map(o -> null);
     }
 
     @NonNull @Override public Observable<Void> returnFromBrowser() {
-        return mOnReturnedFromBrowserSubject;
+        return returnedFromBrowserSubject;
     }
 
     @Override public void startBrowser(@NonNull final String url) {
-        Snackbar.make(mViewGroupRoot, R.string.redirecting_to_browser, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(rootViewGroup, R.string.redirecting_to_browser, Snackbar.LENGTH_LONG).show();
 
         finish();
         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));

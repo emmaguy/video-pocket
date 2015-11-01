@@ -4,17 +4,17 @@ public enum SortOrder {
     VIDEO_DURATION(0),
     TIME_ADDED_TO_POCKET(1);
 
-    private final int mIndex;
+    private final int index;
 
     SortOrder(final int index) {
-        mIndex = index;
+        this.index = index;
     }
 
     public static SortOrder fromIndex(final int index) {
-        return index == VIDEO_DURATION.mIndex ? SortOrder.VIDEO_DURATION : SortOrder.TIME_ADDED_TO_POCKET;
+        return index == VIDEO_DURATION.index ? SortOrder.VIDEO_DURATION : SortOrder.TIME_ADDED_TO_POCKET;
     }
 
     public int getIndex() {
-        return mIndex;
+        return index;
     }
 }

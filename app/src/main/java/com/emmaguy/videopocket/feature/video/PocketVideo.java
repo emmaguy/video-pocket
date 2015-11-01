@@ -3,25 +3,25 @@ package com.emmaguy.videopocket.feature.video;
 import com.google.gson.annotations.SerializedName;
 
 class PocketVideo {
-    @SerializedName("item_id") private final long mId;
-    @SerializedName("resolved_title") private final String mTitle;
-    @SerializedName("resolved_url") private final String mUrl;
+    @SerializedName("item_id") private final long id;
+    @SerializedName("resolved_title") private final String title;
+    @SerializedName("resolved_url") private final String url;
 
     PocketVideo(long id, String title, String url) {
-        mId = id;
-        mTitle = title;
-        mUrl = url;
+        this.id = id;
+        this.title = title;
+        this.url = url;
     }
 
     String getTitle() {
-        return mTitle;
+        return title;
     }
 
     String getUrl() {
-        return mUrl;
+        return url;
     }
 
     long getId() {
-        return mId;
+        return id;
     }
 }

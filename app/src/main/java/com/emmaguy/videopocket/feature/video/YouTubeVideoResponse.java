@@ -5,42 +5,42 @@ import com.google.gson.annotations.SerializedName;
 import java.util.List;
 
 class YouTubeVideoResponse {
-    @SerializedName("items") private final List<YouTubeResponse> mItems;
+    @SerializedName("items") private final List<YouTubeResponse> items;
 
     YouTubeVideoResponse(List<YouTubeResponse> items) {
-        mItems = items;
+        this.items = items;
     }
 
-    public List<YouTubeResponse> getItems() {
-        return mItems;
+    List<YouTubeResponse> getItems() {
+        return items;
     }
 
     static class YouTubeResponse {
-        @SerializedName("contentDetails") private final ContentDetails mContentDetails;
-        @SerializedName("id") private final String mId;
+        @SerializedName("contentDetails") private final ContentDetails contentDetails;
+        @SerializedName("id") private final String id;
 
         YouTubeResponse(ContentDetails contentDetails, String id) {
-            mContentDetails = contentDetails;
-            mId = id;
+            this.contentDetails = contentDetails;
+            this.id = id;
         }
 
         public ContentDetails getContentDetails() {
-            return mContentDetails;
+            return contentDetails;
         }
 
         public String getId() {
-            return mId;
+            return id;
         }
 
         static class ContentDetails {
-            @SerializedName("duration") private final String mDuration;
+            @SerializedName("duration") private final String duration;
 
             ContentDetails(String duration) {
-                mDuration = duration;
+                this.duration = duration;
             }
 
             public String getDuration() {
-                return mDuration;
+                return duration;
             }
         }
     }

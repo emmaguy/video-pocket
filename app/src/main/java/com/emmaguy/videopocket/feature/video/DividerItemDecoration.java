@@ -7,10 +7,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 class DividerItemDecoration extends RecyclerView.ItemDecoration {
-    private final Drawable mDivider;
+    private final Drawable divider;
 
     DividerItemDecoration(@NonNull final Drawable divider) {
-        mDivider = divider;
+        this.divider = divider;
     }
 
     @Override
@@ -25,10 +25,10 @@ class DividerItemDecoration extends RecyclerView.ItemDecoration {
             final RecyclerView.LayoutParams params = (RecyclerView.LayoutParams) child.getLayoutParams();
 
             final int top = child.getBottom() + params.bottomMargin;
-            final int bottom = top + mDivider.getIntrinsicHeight();
+            final int bottom = top + divider.getIntrinsicHeight();
 
-            mDivider.setBounds(left, top, right, bottom);
-            mDivider.draw(c);
+            divider.setBounds(left, top, right, bottom);
+            divider.draw(c);
         }
     }
 }

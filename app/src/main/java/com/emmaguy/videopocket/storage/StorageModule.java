@@ -8,7 +8,7 @@ import com.google.gson.Gson;
 import dagger.Module;
 import dagger.Provides;
 
-@Module public class StorageModule {
+@Module public final class StorageModule {
     @Provides UserStorage provideUserStorage(SharedPreferences sharedPreferences, Resources resources) {
         return new SharedPreferencesUserStorage(sharedPreferences, resources);
     }

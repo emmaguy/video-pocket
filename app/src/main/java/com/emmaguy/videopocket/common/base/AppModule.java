@@ -1,9 +1,11 @@
-package com.emmaguy.videopocket;
+package com.emmaguy.videopocket.common.base;
 
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
+
+import com.emmaguy.videopocket.R;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -19,23 +21,23 @@ import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
-@Module final class VideoPocketModule {
-    private final Context mContext;
+@Module final class AppModule {
+    private final Context context;
 
-    VideoPocketModule(@NonNull final Context context) {
-        mContext = context;
+    public AppModule(@NonNull final Context context) {
+        this.context = context;
     }
 
     @Provides @Singleton @ApplicationContext Context provideContext() {
-        return mContext.getApplicationContext();
+        return context.getApplicationContext();
     }
 
     @Provides @Singleton Resources provideResources() {
-        return mContext.getResources();
+        return context.getResources();
     }
 
     @Provides @Singleton SharedPreferences provideSharedPreferences(Resources resources) {
-        return mContext.getSharedPreferences(resources.getString(R.string.shared_pref_name), Context.MODE_PRIVATE);
+        return context.getSharedPreferences(resources.getString(R.string.shared_pref_name), Context.MODE_PRIVATE);
     }
 
     @Provides @Singleton @Named("ui") public Scheduler provideUiScheduler() {

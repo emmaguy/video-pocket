@@ -12,26 +12,25 @@ import com.google.gson.reflect.TypeToken;
 import java.util.List;
 
 class SharedPreferencesVideoStorage implements VideoStorage {
-    private final SharedPreferences mSharedPreferences;
-    private final Resources mResources;
-    private final Gson mGson;
+    private final SharedPreferences sharedPreferences;
+    private final Resources resources;
+    private final Gson gson;
 
     SharedPreferencesVideoStorage(@NonNull final SharedPreferences sharedPreferences, @NonNull final Resources resources, @NonNull final Gson gson) {
-        mSharedPreferences = sharedPreferences;
-        mResources = resources;
-        mGson = gson;
+        this.sharedPreferences = sharedPreferences;
+        this.resources = resources;
+        this.gson = gson;
     }
 
     @Override @NonNull public List<Video> getVideos() {
-        final String json = mSharedPreferences.getString(mResources.getString(R.string.pref_key_videos), "[]");
-        return mGson.fromJson(json, new TypeToken<List<Video>>() {
-        }.getType());
+        final String json = sharedPreferences.getString(resources.getString(R.string.pref_key_videos), "[]");
+        return gson.fromJson(json, new TypeToken<List<Video>>() {}.getType());
     }
 
     @Override public void storeVideos(@NonNull final List<Video> videos) {
-        mSharedPreferences
+        sharedPreferences
                 .edit()
-                .putString(mResources.getString(R.string.pref_key_videos), mGson.toJson(videos))
+                .putString(resources.getString(R.string.pref_key_videos), gson.toJson(videos))
                 .apply();
     }
 }

@@ -1,16 +1,18 @@
 package com.emmaguy.videopocket.storage;
 
+import android.support.annotation.NonNull;
+
 import com.emmaguy.videopocket.feature.video.SortOrder;
 
 public interface UserStorage {
-    String getUsername();
+    @NonNull String getUsername();
     void storeUsername(final String username);
 
-    String getAccessToken();
-    void storeAccessToken(String accessToken);
+    @NonNull String getAccessToken();
+    void storeAccessToken(final String accessToken);
 
-    String getRequestToken();
-    void storeRequestToken(String requestTokenCode);
+    @NonNull String getRequestToken();
+    void storeRequestToken(final String requestTokenCode);
 
     SortOrder getSortOrder();
     void setSortOrder(final SortOrder sortOrder);

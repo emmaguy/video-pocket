@@ -1,5 +1,7 @@
 package com.emmaguy.videopocket.feature.video;
 
+import android.support.annotation.NonNull;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,14 +12,14 @@ import retrofit.mime.TypedInput;
 import retrofit.mime.TypedOutput;
 
 class YouTubeVideoConverter implements Converter {
-    private final Converter mOriginalConverter;
+    private final Converter converter;
 
-    YouTubeVideoConverter(Converter originalConverter) {
-        mOriginalConverter = originalConverter;
+    YouTubeVideoConverter(@NonNull final Converter originalConverter) {
+        this.converter = originalConverter;
     }
 
-    @Override public Object fromBody(TypedInput body, Type type) throws ConversionException {
-        final YouTubeVideoResponse response = (YouTubeVideoResponse) mOriginalConverter.fromBody(body, YouTubeVideoResponse.class);
+    @Override public Object fromBody(final TypedInput body, final Type type) throws ConversionException {
+        final YouTubeVideoResponse response = (YouTubeVideoResponse) converter.fromBody(body, YouTubeVideoResponse.class);
 
         final List<YouTubeVideo> videoInfo = new ArrayList<>();
         for (YouTubeVideoResponse.YouTubeResponse r : response.getItems()) {
@@ -27,7 +29,7 @@ class YouTubeVideoConverter implements Converter {
         return videoInfo;
     }
 
-    @Override public TypedOutput toBody(Object object) {
-        return mOriginalConverter.toBody(object);
+    @Override public TypedOutput toBody(final Object object) {
+        return converter.toBody(object);
     }
 }

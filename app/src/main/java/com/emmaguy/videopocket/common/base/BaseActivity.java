@@ -17,13 +17,13 @@ import butterknife.ButterKnife;
 public abstract class BaseActivity<V extends PresenterView, C extends BaseComponent> extends AppCompatActivity {
     private static final String COMPONENT_KEY = "component_key";
 
-    private String mComponentKey;
+    private String componentKey;
 
-    @Override protected void onCreate(Bundle savedInstanceState) {
+    @Override protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if (savedInstanceState != null) {
-            mComponentKey = savedInstanceState.getString(COMPONENT_KEY);
+            componentKey = savedInstanceState.getString(COMPONENT_KEY);
         }
 
         inject(getComponent());
@@ -37,23 +37,23 @@ public abstract class BaseActivity<V extends PresenterView, C extends BaseCompon
 
     @NonNull protected abstract BasePresenter<V> getPresenter();
     @NonNull protected abstract V getPresenterView();
-    @NonNull protected abstract C createComponent(@NonNull ActivityComponent component);
+    @NonNull protected abstract C createComponent(@NonNull final ActivityComponent component);
 
-    protected abstract void inject(@NonNull C component);
+    protected abstract void inject(@NonNull final C component);
 
     protected void onViewCreated(@Nullable final Bundle savedInstanceState) {
 
     }
 
     private C getComponent() {
-        final VideoPocketApplication app = VideoPocketApplication.with(this);
+        final BaseApplication app = BaseApplication.with(this);
         final C component;
-        if (mComponentKey == null) {
-            mComponentKey = UUID.randomUUID().toString();
+        if (componentKey == null) {
+            componentKey = UUID.randomUUID().toString();
             component = createComponent(app.getComponent().plus(new ActivityModule()));
-            app.putComponent(mComponentKey, component);
+            app.putComponent(componentKey, component);
         } else {
-            component = app.getComponent(mComponentKey);
+            component = app.getComponent(componentKey);
             if (component == null) {
                 throw new IllegalStateException("Component was not properly stored");
             }
@@ -62,9 +62,8 @@ public abstract class BaseActivity<V extends PresenterView, C extends BaseCompon
         return component;
     }
 
-    @Override
-    public void onSaveInstanceState(Bundle savedInstanceState) {
-        savedInstanceState.putString(COMPONENT_KEY, mComponentKey);
+    @Override public void onSaveInstanceState(final Bundle savedInstanceState) {
+        savedInstanceState.putString(COMPONENT_KEY, componentKey);
 
         super.onSaveInstanceState(savedInstanceState);
     }
@@ -74,7 +73,7 @@ public abstract class BaseActivity<V extends PresenterView, C extends BaseCompon
         ButterKnife.unbind(this);
 
         if (isFinishing()) {
-            VideoPocketApplication.with(this).removeComponent(mComponentKey);
+            VideoPocketApplication.with(this).removeComponent(componentKey);
         }
 
         super.onDestroy();

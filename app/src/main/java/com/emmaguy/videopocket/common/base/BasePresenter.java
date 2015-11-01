@@ -7,32 +7,32 @@ import rx.Subscription;
 import rx.subscriptions.CompositeSubscription;
 
 public class BasePresenter<V extends PresenterView> {
-    private CompositeSubscription mSubscriptions;
-    private V mView;
+    private CompositeSubscription compositeSubscription;
+    private V view;
 
     @CallSuper public void onViewAttached(@NonNull final V view) {
-        if (mView != null) {
-            throw new IllegalStateException("View " + mView + " is already attached. Cannot attach " + view);
+        if (this.view != null) {
+            throw new IllegalStateException("View " + this.view + " is already attached. Cannot attach " + view);
         }
-        mView = view;
+        this.view = view;
     }
 
     @CallSuper public void onViewDetached() {
-        if (mView == null) {
+        if (view == null) {
             throw new IllegalStateException("View is already detached");
         }
-        mView = null;
+        view = null;
 
-        if (mSubscriptions != null) {
-            mSubscriptions.unsubscribe();
-            mSubscriptions = null;
+        if (compositeSubscription != null) {
+            compositeSubscription.unsubscribe();
+            compositeSubscription = null;
         }
     }
 
     @CallSuper protected void unsubscribeOnViewDetach(@NonNull final Subscription subscription) {
-        if (mSubscriptions == null) {
-            mSubscriptions = new CompositeSubscription();
+        if (compositeSubscription == null) {
+            compositeSubscription = new CompositeSubscription();
         }
-        mSubscriptions.add(subscription);
+        compositeSubscription.add(subscription);
     }
 }

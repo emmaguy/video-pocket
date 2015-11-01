@@ -7,6 +7,6 @@ import com.emmaguy.videopocket.feature.video.Video;
 import java.util.List;
 
 public interface VideoStorage {
-    List<Video> getVideos();
+    @NonNull List<Video> getVideos();
     void storeVideos(@NonNull final List<Video> videos);
 }

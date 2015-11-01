@@ -39,20 +39,20 @@ import rx.Observable;
 import rx.subjects.PublishSubject;
 
 public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoComponent> implements VideoPresenter.View, SearchView.OnQueryTextListener {
-    private final PublishSubject<Pair<Video, Long>> mArchiveSubject = PublishSubject.create();
-    private final PublishSubject<SortOrder> mSortOrderSubject = PublishSubject.create();
-    private final PublishSubject<String> mSearchQuerySubject = PublishSubject.create();
-    private final PublishSubject<Void> mRefreshSubject = PublishSubject.create();
+    private final PublishSubject<Pair<Video, Long>> archiveSubject = PublishSubject.create();
+    private final PublishSubject<SortOrder> sortOrderSubject = PublishSubject.create();
+    private final PublishSubject<String> searchQuerySubject = PublishSubject.create();
+    private final PublishSubject<Void> refreshSubject = PublishSubject.create();
 
-    @Inject VideoPresenter mVideoPocketPresenter;
-    @Inject UserStorage mUserStorage;
+    @Inject VideoPresenter videoPresenter;
+    @Inject UserStorage userStorage;
 
-    @Bind(R.id.video_viewgroup_root) ViewGroup mViewGroupRoot;
-    @Bind(R.id.video_recycler_view) RecyclerView mRecyclerView;
-    @Bind(R.id.video_progressbar) ProgressBar mProgressBar;
-    @Bind(R.id.toolbar) Toolbar mToolbar;
+    @Bind(R.id.video_viewgroup_root) ViewGroup rootViewGroup;
+    @Bind(R.id.video_recycler_view) RecyclerView recyclerView;
+    @Bind(R.id.video_progressbar) ProgressBar progressBar;
+    @Bind(R.id.toolbar) Toolbar toolbar;
 
-    private VideoAdapter mAdapter;
+    private VideoAdapter adapter;
 
     public static void start(@NonNull final Context context) {
         context.startActivity(new Intent(context, VideoActivity.class));
@@ -63,7 +63,7 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     }
 
     @NonNull @Override protected BasePresenter<VideoPresenter.View> getPresenter() {
-        return mVideoPocketPresenter;
+        return videoPresenter;
     }
 
     @NonNull @Override protected VideoPresenter.View getPresenterView() {
@@ -79,15 +79,15 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     }
 
     @Override protected void onViewCreated(Bundle savedInstanceState) {
-        mAdapter = new VideoAdapter();
+        adapter = new VideoAdapter();
 
-        setSupportActionBar(mToolbar);
+        setSupportActionBar(toolbar);
 
-        mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setHasFixedSize(true);
-        mRecyclerView.addItemDecoration(new DividerItemDecoration(ContextCompat.getDrawable(this, R.drawable.videos_divider)));
-        mRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.addItemDecoration(new DividerItemDecoration(ContextCompat.getDrawable(this, R.drawable.videos_divider)));
+        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         final ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.Callback() {
             @Override public int getMovementFlags(final RecyclerView recyclerView, final RecyclerView.ViewHolder viewHolder) {
@@ -101,10 +101,10 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
 
             @Override public void onSwiped(final RecyclerView.ViewHolder viewHolder, final int direction) {
                 final VideoAdapter.ViewHolder holder = (VideoAdapter.ViewHolder) viewHolder;
-                mArchiveSubject.onNext(new Pair<>(mAdapter.getItemAt(holder.getAdapterPosition()), LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)));
+                archiveSubject.onNext(new Pair<>(adapter.getItemAt(holder.getAdapterPosition()), LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)));
             }
         });
-        itemTouchHelper.attachToRecyclerView(mRecyclerView);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
     }
 
     @Override public boolean onCreateOptionsMenu(final Menu menu) {
@@ -125,18 +125,18 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
 
     @Override public boolean onOptionsItemSelected(final MenuItem item) {
         if (item.getItemId() == R.id.menu_video_refresh) {
-            mRefreshSubject.onNext(null);
+            refreshSubject.onNext(null);
             return true;
         } else if (item.getItemId() == R.id.menu_sort_order) {
             final CharSequence sortOrders[] = new CharSequence[]{getString(R.string.sort_by_duration), getString(R.string.sort_by_time_added_to_pocket)};
-            final SortOrder currentSortOrder = mUserStorage.getSortOrder();
+            final SortOrder currentSortOrder = userStorage.getSortOrder();
 
             final AlertDialog.Builder builder = new AlertDialog.Builder(this, R.style.AppThemeDialog);
             builder.setTitle(getString(R.string.sort_order));
             builder.setSingleChoiceItems(sortOrders, currentSortOrder.getIndex(), (dialog, index) -> {
                 final SortOrder newSortOrder = SortOrder.fromIndex(index);
                 if (currentSortOrder != newSortOrder) {
-                    mSortOrderSubject.onNext(newSortOrder);
+                    sortOrderSubject.onNext(newSortOrder);
                 }
                 dialog.dismiss();
             });
@@ -147,40 +147,40 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     }
 
     @NonNull @Override public Observable<Void> refreshAction() {
-        return mRefreshSubject;
+        return refreshSubject;
     }
 
     @NonNull @Override public Observable<String> searchQueryChanged() {
-        return mSearchQuerySubject;
+        return searchQuerySubject;
     }
 
     @NonNull @Override public Observable<SortOrder> sortOrderChanged() {
-        return mSortOrderSubject;
+        return sortOrderSubject;
     }
 
     @NonNull @Override public Observable<Pair<Video, Long>> archiveAction() {
-        return mArchiveSubject;
+        return archiveSubject;
     }
 
     @Override public void archiveItem(final @NonNull Video video) {
-        Snackbar.make(mViewGroupRoot, R.string.video_moved_to_archive, Snackbar.LENGTH_LONG).show();
-        mAdapter.removeVideo(video);
+        Snackbar.make(rootViewGroup, R.string.video_moved_to_archive, Snackbar.LENGTH_LONG).show();
+        adapter.removeVideo(video);
     }
 
     @Override public void showVideos(@NonNull final List<Video> videos) {
-        mAdapter.updateVideos(videos);
+        adapter.updateVideos(videos);
     }
 
     @Override public void showLoadingView() {
-        mProgressBar.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.VISIBLE);
     }
 
     @Override public void hideLoadingView() {
-        mProgressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.GONE);
     }
 
     @Override public void showError() {
-        Snackbar.make(mViewGroupRoot, R.string.something_went_wrong_whilst_refreshing, Snackbar.LENGTH_LONG).show();
+        Snackbar.make(rootViewGroup, R.string.something_went_wrong_whilst_refreshing, Snackbar.LENGTH_LONG).show();
     }
 
     @Override public boolean onQueryTextSubmit(final String query) {
@@ -188,7 +188,7 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     }
 
     @Override public boolean onQueryTextChange(final String newText) {
-        mSearchQuerySubject.onNext(newText);
+        searchQuerySubject.onNext(newText);
         return true;
     }
 }

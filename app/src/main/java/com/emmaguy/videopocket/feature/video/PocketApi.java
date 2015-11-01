@@ -16,5 +16,7 @@ interface PocketApi {
 
     @POST("/v3/send")
     @Headers({"Content-Type: application/x-www-form-urlencoded", "X-Accept: application/json"})
-    Observable<ActionResultResponse> archive(@Query("consumer_key") String consumerKey, @Query("access_token") String accessToken, @Query("actions") String actions, @Body String empty);
+    Observable<ActionResultResponse> archive(@Query("consumer_key") String consumerKey,
+                                             @Query("access_token") String accessToken,
+                                             @Query("actions") String actions, @Body String empty);
 }
