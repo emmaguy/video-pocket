@@ -31,7 +31,8 @@ public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginP
 
     @Mock private PocketAuthenticationApi pocketAuthenticationApi;
     @Mock private UserStorage userStorage;
-    private Gson gson = new Gson();
+
+    private final Gson gson = new Gson();
 
     private final PublishSubject<Void> mReturnFromBrowserSubject = PublishSubject.create();
     private final PublishSubject<Void> mLoginSubject = PublishSubject.create();

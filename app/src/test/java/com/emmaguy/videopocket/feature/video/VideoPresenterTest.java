@@ -58,6 +58,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     private final PublishSubject<Void> refreshActionSubject = PublishSubject.create();
 
     private final TestScheduler testScheduler = new TestScheduler();
+    private final Gson gson = new Gson();
 
     @Mock private YouTubeParser youTubeParser;
     @Mock private VideoStorage videoStorage;
@@ -65,7 +66,6 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     @Mock private YouTubeApi youTubeApi;
     @Mock private PocketApi pocketApi;
     @Mock private Resources resources;
-    private Gson gson = new Gson();
 
     @Captor private ArgumentCaptor<List<Video>> videosCaptor;
     @Captor private ArgumentCaptor<Map<String, String>> youTubeApiCaptor;
