@@ -11,7 +11,7 @@ class PocketVideoResponse {
         this.list = list;
     }
 
-    public Map<String, PocketVideo> getList() {
+    public Map<String, PocketVideo> getMap() {
         return list;
     }
 }

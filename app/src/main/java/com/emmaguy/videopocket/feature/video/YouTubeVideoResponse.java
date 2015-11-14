@@ -24,11 +24,11 @@ class YouTubeVideoResponse {
             this.id = id;
         }
 
-        public ContentDetails getContentDetails() {
+        ContentDetails getContentDetails() {
             return contentDetails;
         }
 
-        public String getId() {
+        String getId() {
             return id;
         }
 
@@ -39,7 +39,7 @@ class YouTubeVideoResponse {
                 this.duration = duration;
             }
 
-            public String getDuration() {
+            String getDuration() {
                 return duration;
             }
         }

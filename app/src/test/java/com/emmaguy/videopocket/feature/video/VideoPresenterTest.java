@@ -7,6 +7,8 @@ import android.support.v4.util.Pair;
 import com.emmaguy.videopocket.BasePresenterTest;
 import com.emmaguy.videopocket.storage.UserStorage;
 import com.emmaguy.videopocket.storage.VideoStorage;
+import com.google.gson.Gson;
+import com.squareup.okhttp.RequestBody;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -14,7 +16,6 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.threeten.bp.Duration;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,8 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import retrofit.RetrofitError;
-import retrofit.mime.TypedInput;
+import retrofit.Response;
+import retrofit.Result;
 import rx.Observable;
 import rx.schedulers.Schedulers;
 import rx.schedulers.TestScheduler;
@@ -45,10 +46,11 @@ import static org.mockito.Mockito.when;
 public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoPresenter.View> {
     private static final int YOUTUBE_REQUEST_LIMIT = 10;
 
-    private static final String DEFAULT_YOUTUBE_ID = "123";
+    private static final String DEFAULT_YOUTUBE_ID = "youtubeid";
+
     private static final String DEFAULT_DURATION = "PT2M";
     private static final String DEFAULT_TITLE = "blah";
-    private static final String DEFAULT_URL = "http://123";
+    private static final String DEFAULT_URL = "http://iamaurl";
 
     private final PublishSubject<Pair<Video, Long>> archiveActionSubject = PublishSubject.create();
     private final PublishSubject<SortOrder> sortOrderChangedSubject = PublishSubject.create();
@@ -63,21 +65,26 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     @Mock private YouTubeApi youTubeApi;
     @Mock private PocketApi pocketApi;
     @Mock private Resources resources;
+    private Gson gson = new Gson();
 
     @Captor private ArgumentCaptor<List<Video>> videosCaptor;
     @Captor private ArgumentCaptor<Map<String, String>> youTubeApiCaptor;
 
     @Override protected VideoPresenter createPresenter() {
-        final Observable<Map<String, PocketVideo>> pocketVideosObservable = Observable.just(buildVideosMap());
-        when(pocketApi.videos(any())).thenReturn(pocketVideosObservable);
+        final PocketVideoResponse videoResponse = new PocketVideoResponse(buildVideosMap());
+        when(pocketApi.videos(any()))
+                .thenReturn(Observable.just(Result.response(Response.success(videoResponse))));
 
-        final Observable<List<YouTubeVideo>> youTubeVideosObservable = Observable.just(Collections.singletonList(new YouTubeVideo(DEFAULT_YOUTUBE_ID, DEFAULT_DURATION)));
-        when(youTubeApi.videoData(any(), anyString())).thenReturn(youTubeVideosObservable);
+        final YouTubeVideoResponse mockYouTubeResponse = new YouTubeVideoResponse(
+                Collections.singletonList(buildYouTubeResponse(DEFAULT_DURATION, DEFAULT_YOUTUBE_ID)));
+        when(youTubeApi.videoData(any(), anyString()))
+                .thenReturn(Observable.just(Result.response(Response.success(mockYouTubeResponse))));
 
         when(userStorage.getSortOrder()).thenReturn(SortOrder.VIDEO_DURATION);
         when(videoStorage.getVideos()).thenReturn(new ArrayList<>());
 
-        return new VideoPresenter(pocketApi, youTubeApi, youTubeParser, testScheduler, Schedulers.immediate(), videoStorage, userStorage, resources, "", YOUTUBE_REQUEST_LIMIT);
+        return new VideoPresenter(pocketApi, youTubeApi, youTubeParser, testScheduler, Schedulers.immediate(),
+                videoStorage, userStorage, resources, gson, "", YOUTUBE_REQUEST_LIMIT);
     }
 
     @Override protected VideoPresenter.View createView() {
@@ -91,26 +98,21 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
 
     @NonNull private Map<String, PocketVideo> buildVideosMap() {
         final Map<String, PocketVideo> map = new HashMap<>();
-        map.put("1", mockPocketVideo(1));
-        map.put("2", mockPocketYouTubeVideo(DEFAULT_YOUTUBE_ID, 2));
-        map.put("3", mockPocketYouTubeVideo(DEFAULT_YOUTUBE_ID, 3));
+        map.put("1", buildPocketVideo(1, DEFAULT_URL));
+        map.put("2", buildYouTubeVideo(DEFAULT_YOUTUBE_ID, 2));
+        map.put("3", buildYouTubeVideo("youtubeid2", 3));
         return map;
     }
 
-    @NonNull private PocketVideo mockPocketVideo(final long id) {
-        final PocketVideo mock = mock(PocketVideo.class);
-        when(mock.getId()).thenReturn(id);
-        when(mock.getUrl()).thenReturn(DEFAULT_URL);
-        when(mock.getTitle()).thenReturn(DEFAULT_TITLE);
-        return mock;
+    @NonNull private PocketVideo buildPocketVideo(final long id, @NonNull final String url) {
+        return new PocketVideo(id, DEFAULT_TITLE, url);
     }
 
-    @NonNull private PocketVideo mockPocketYouTubeVideo(final String youTubeId, final long pocketId) {
-        final PocketVideo mock = mockPocketVideo(pocketId);
+    @NonNull private PocketVideo buildYouTubeVideo(final String youTubeId, final long pocketId) {
         final String youTubeUrl = DEFAULT_URL + "?id=" + youTubeId;
-        when(mock.getUrl()).thenReturn(youTubeUrl);
+        final PocketVideo pocketVideo = new PocketVideo(pocketId, DEFAULT_TITLE, youTubeUrl);
         when(youTubeParser.getYouTubeId(youTubeUrl)).thenReturn(youTubeId);
-        return mock;
+        return pocketVideo;
     }
 
     @Test public void onViewAttached_retrieveVideosFromPocket_thenRetrieveDurationsFromYouTube() throws Exception {
@@ -118,7 +120,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
         verify(view).showLoadingView();
-        verify(pocketApi).videos(any(TypedInput.class));
+        verify(pocketApi).videos(any(RequestBody.class));
         verify(view).hideLoadingView();
         verify(view).showVideos(videosCaptor.capture());
 
@@ -126,7 +128,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         assertThat(videos.size(), equalTo(1));
         assertThat(videos.get(0).getTitle(), equalTo(DEFAULT_TITLE));
         assertThat(videos.get(0).getDuration().toMinutes(), equalTo(2l));
-        assertThat(videos.get(0).getUrl(), equalTo(DEFAULT_URL));
+        assertThat(videos.get(0).getUrl(), equalTo(DEFAULT_URL + "?id=youtubeid"));
     }
 
     @Test public void onViewAttached_afterSuccessfulRetrieval_usesCache() throws Exception {
@@ -134,7 +136,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
         verify(videoStorage).getVideos();
-        verify(pocketApi).videos(any(TypedInput.class));
+        verify(pocketApi).videos(any(RequestBody.class));
         verify(youTubeApi).videoData(any(), anyString());
         verify(view).showVideos(any());
 
@@ -169,10 +171,10 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
 
         for (int i = 0; i < 21; i++) {
             final String videoId = "" + (i + 1);
-            videos.put(videoId, mockPocketYouTubeVideo(videoId, i));
+            videos.put(videoId, buildYouTubeVideo(videoId, i));
         }
-        final Observable<Map<String, PocketVideo>> videosObservable = Observable.just(videos);
-        when(pocketApi.videos(any(TypedInput.class))).thenReturn(videosObservable);
+        when(pocketApi.videos(any()))
+                .thenReturn(Observable.just(Result.response(Response.success(new PocketVideoResponse(videos)))));
 
         presenterOnViewAttached();
         testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
@@ -188,25 +190,25 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     @Test
     public void onViewAttached_retrievedVideos_areSortedByDurationAndThoseWithNoDurationAreRemoved() throws Exception {
         final Map<String, PocketVideo> map = new HashMap<>();
-        map.put("0", mockPocketVideo(0));
-        map.put("1", mockPocketYouTubeVideo("1", 1));
-        map.put("2", mockPocketYouTubeVideo("2", 2));
-        map.put("3", mockPocketYouTubeVideo("3", 3));
-        map.put("4", mockPocketYouTubeVideo("4", 4));
-        map.put("5", mockPocketYouTubeVideo("5", 5));
-        map.put("6", mockPocketYouTubeVideo("6", 6));
+        map.put("0", buildPocketVideo(0, DEFAULT_URL));
+        map.put("1", buildYouTubeVideo("1", 1));
+        map.put("2", buildYouTubeVideo("2", 2));
+        map.put("3", buildYouTubeVideo("3", 3));
+        map.put("4", buildYouTubeVideo("4", 4));
+        map.put("5", buildYouTubeVideo("5", 5));
+        map.put("6", buildYouTubeVideo("6", 6));
 
-        final Observable<Map<String, PocketVideo>> pocketVideosObservable = Observable.just(map);
-        when(pocketApi.videos(any(TypedInput.class))).thenReturn(pocketVideosObservable);
+        when(pocketApi.videos(any())).thenReturn(Observable.just(Result.response(Response.success(new PocketVideoResponse(map)))));
 
-        final Observable<List<YouTubeVideo>> youTubeVideosObservable = Observable.just(Arrays.asList(
-                mockYouTubeVideo("1", Duration.parse("PT2M")),
-                mockYouTubeVideo("2", Duration.parse("PT2S")),
-                mockYouTubeVideo("3", Duration.parse("PT1S")),
-                mockYouTubeVideo("4", Duration.parse("PT1M")),
-                mockYouTubeVideo("5", Duration.parse("PT3M")),
-                mockYouTubeVideo("6", null)));
-        when(youTubeApi.videoData(any(), anyString())).thenReturn(youTubeVideosObservable);
+        final YouTubeVideoResponse response = new YouTubeVideoResponse(Arrays.asList(
+                buildYouTubeResponse("PT2M", "1"),
+                buildYouTubeResponse("PT2S", "2"),
+                buildYouTubeResponse("PT1S", "3"),
+                buildYouTubeResponse("PT1M", "4"),
+                buildYouTubeResponse("PT3M", "5"),
+                new YouTubeVideoResponse.YouTubeResponse(null, "6")
+        ));
+        when(youTubeApi.videoData(any(), anyString())).thenReturn(Observable.just(Result.response(Response.success(response))));
 
         presenterOnViewAttached();
         testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
@@ -222,16 +224,14 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         assertThat(videos.get(4).getDuration(), equalTo(Duration.parse("PT1S")));
     }
 
-    @NonNull private YouTubeVideo mockYouTubeVideo(final String id, final Duration duration) {
-        final YouTubeVideo mock = mock(YouTubeVideo.class);
-        when(mock.getId()).thenReturn(id);
-        when(mock.getDuration()).thenReturn(duration);
-        return mock;
+    @NonNull
+    private YouTubeVideoResponse.YouTubeResponse buildYouTubeResponse(@NonNull final String duration, @NonNull final String id) {
+        return new YouTubeVideoResponse.YouTubeResponse(new YouTubeVideoResponse.YouTubeResponse.ContentDetails(duration), id);
     }
 
     @Test
     public void onViewAttached_retrieveVideos_pocketApiThrowsException_hidesLoadingAndShowsError() throws Exception {
-        when(pocketApi.videos(any(TypedInput.class))).thenThrow(RetrofitError.networkError("url", new IOException()));
+        when(pocketApi.videos(any(RequestBody.class))).thenReturn(Observable.just(Result.error(new Throwable())));
 
         presenterOnViewAttached();
         testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
@@ -242,7 +242,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
 
     @Test
     public void onViewAttached_retrieveYouTubeDurations_youTubeApiThrowsException_hidesLoadingAndShowsError() throws Exception {
-        when(youTubeApi.videoData(any(), anyString())).thenThrow(RetrofitError.networkError("url", new IOException()));
+        when(youTubeApi.videoData(any(), anyString())).thenReturn(Observable.just(Result.error(new Throwable())));
 
         presenterOnViewAttached();
         testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
@@ -252,8 +252,9 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     }
 
     @Test public void onViewAttached_retrieveNoVideosFromPocket_hidesLoadingAndShowsError() throws Exception {
-        final Observable<Map<String, PocketVideo>> pocketVideosObservable = Observable.just(new HashMap<>());
-        when(pocketApi.videos(any(TypedInput.class))).thenReturn(pocketVideosObservable);
+        final PocketVideoResponse videoResponse = new PocketVideoResponse(new HashMap<>());
+        when(pocketApi.videos(any()))
+                .thenReturn(Observable.just(Result.response(Response.success(videoResponse))));
 
         presenterOnViewAttached();
         testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
@@ -375,7 +376,8 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         final ActionResultResponse successfulResponse = new ActionResultResponse();
         successfulResponse.status = 1;
 
-        when(pocketApi.archive(any(String.class), any(String.class), any(String.class), any(String.class))).thenReturn(Observable.just(successfulResponse));
+        when(pocketApi.archive(any(String.class), any(String.class), any(String.class)))
+                .thenReturn(Observable.just(Result.response(Response.success(successfulResponse))));
 
         final Video video = mockVideo(1);
         final List<Video> videos = new ArrayList<>();
@@ -399,7 +401,8 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         final ActionResultResponse successfulResponse = new ActionResultResponse();
         successfulResponse.status = 0;
 
-        when(pocketApi.archive(any(String.class), any(String.class), any(String.class), any(String.class))).thenReturn(Observable.just(successfulResponse));
+        when(pocketApi.archive(any(String.class), any(String.class), any(String.class)))
+                .thenReturn(Observable.just(Result.response(Response.success(successfulResponse))));
 
         final Video video = mockVideo(1);
         when(videoStorage.getVideos()).thenReturn(Collections.singletonList(video));
@@ -420,7 +423,8 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         when(videoStorage.getVideos()).thenReturn(Collections.singletonList(video));
         when(video.getId()).thenReturn(1l);
 
-        when(pocketApi.archive(any(String.class), any(String.class), any(String.class), any(String.class))).thenThrow(RetrofitError.networkError("url", new IOException()));
+        when(pocketApi.archive(any(String.class), any(String.class), any(String.class)))
+                .thenReturn(Observable.just(Result.error(new Throwable())));
 
         archiveActionSubject.onNext(new Pair<>(video, 1l));
         testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
