@@ -40,8 +40,9 @@ import rx.Scheduler;
 
     @Provides @ActivityScope VideoPresenter provideVideoPresenter(PocketApi pocketApi, YouTubeApi youtubeApi,
                                                                   @Named("io") Scheduler ioScheduler, @Named("ui") Scheduler uiScheduler,
-                                                                  Resources resources, UserStorage userStorage, VideoStorage videoStorage) {
+                                                                  Resources resources, UserStorage userStorage, VideoStorage videoStorage,
+                                                                  Gson gson) {
         final String youTubeApiKey = resources.getString(R.string.youtube_api_key);
-        return new VideoPresenter(pocketApi, youtubeApi, new YouTubeParser(), ioScheduler, uiScheduler, videoStorage, userStorage, resources, new Gson(), youTubeApiKey, YOUTUBE_API_REQUEST_LIMIT);
+        return new VideoPresenter(pocketApi, youtubeApi, new YouTubeParser(), ioScheduler, uiScheduler, videoStorage, userStorage, resources, gson, youTubeApiKey, YOUTUBE_API_REQUEST_LIMIT);
     }
 }

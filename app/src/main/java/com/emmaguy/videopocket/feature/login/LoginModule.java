@@ -26,8 +26,8 @@ import rx.Scheduler;
     }
 
     @Provides LoginPresenter provideLoginPresenter(PocketAuthenticationApi pocketApi,
-            @Named("io") Scheduler ioScheduler, @Named("ui") Scheduler uiScheduler, Resources resources, UserStorage userStorage) {
+            @Named("io") Scheduler ioScheduler, @Named("ui") Scheduler uiScheduler, Resources resources, UserStorage userStorage, Gson gson) {
         final String callbackUrl = resources.getString(R.string.callback_url_scheme) + "://" + resources.getString(R.string.callback_url_host);
-        return new LoginPresenter(pocketApi, ioScheduler, uiScheduler, userStorage, resources.getString(R.string.pocket_app_id), callbackUrl, new Gson());
+        return new LoginPresenter(pocketApi, ioScheduler, uiScheduler, userStorage, resources.getString(R.string.pocket_app_id), callbackUrl, gson);
     }
 }

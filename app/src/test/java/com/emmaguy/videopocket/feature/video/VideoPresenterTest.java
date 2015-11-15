@@ -18,6 +18,7 @@ import org.threeten.bp.Duration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -56,6 +57,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     private final PublishSubject<SortOrder> sortOrderChangedSubject = PublishSubject.create();
     private final PublishSubject<String> searchQuerySubject = PublishSubject.create();
     private final PublishSubject<Void> refreshActionSubject = PublishSubject.create();
+    private final PublishSubject<Void> otherSourcesSubject = PublishSubject.create();
 
     private final TestScheduler testScheduler = new TestScheduler();
     private final Gson gson = new Gson();
@@ -69,6 +71,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
 
     @Captor private ArgumentCaptor<List<Video>> videosCaptor;
     @Captor private ArgumentCaptor<Map<String, String>> youTubeApiCaptor;
+    @Captor private ArgumentCaptor<Map<Integer, Collection<String>>> otherSourcesCaptor;
 
     @Override protected VideoPresenter createPresenter() {
         final PocketVideoResponse videoResponse = new PocketVideoResponse(buildVideosMap());
@@ -93,6 +96,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         when(view.sortOrderChanged()).thenReturn(sortOrderChangedSubject);
         when(view.archiveAction()).thenReturn(archiveActionSubject);
         when(view.searchQueryChanged()).thenReturn(searchQuerySubject);
+        when(view.otherSourcesAction()).thenReturn(otherSourcesSubject);
         return view;
     }
 
@@ -109,7 +113,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     }
 
     @NonNull private PocketVideo buildYouTubeVideo(final String youTubeId, final long pocketId) {
-        final String youTubeUrl = DEFAULT_URL + "?id=" + youTubeId;
+        final String youTubeUrl =  "http://www.youtube?id=" + youTubeId;
         final PocketVideo pocketVideo = new PocketVideo(pocketId, DEFAULT_TITLE, youTubeUrl);
         when(youTubeParser.getYouTubeId(youTubeUrl)).thenReturn(youTubeId);
         return pocketVideo;
@@ -128,7 +132,18 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
         assertThat(videos.size(), equalTo(1));
         assertThat(videos.get(0).getTitle(), equalTo(DEFAULT_TITLE));
         assertThat(videos.get(0).getDuration().toMinutes(), equalTo(2l));
-        assertThat(videos.get(0).getUrl(), equalTo(DEFAULT_URL + "?id=youtubeid"));
+        assertThat(videos.get(0).getUrl(), equalTo("http://www.youtube?id=youtubeid"));
+    }
+
+    @Test public void onViewAttached_storedOtherSourcesAreDefaultUrl() throws Exception {
+        presenterOnViewAttached();
+        testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        verify(userStorage).storeOtherSources(otherSourcesCaptor.capture());
+
+        final Map<Integer, Collection<String>> otherSources = otherSourcesCaptor.getValue();
+        assertThat(otherSources.size(), equalTo(1));
+        assertThat(otherSources.get(1), equalTo(Collections.singletonList("iamaurl")));
     }
 
     @Test public void onViewAttached_afterSuccessfulRetrieval_usesCache() throws Exception {

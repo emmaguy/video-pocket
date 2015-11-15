@@ -13,12 +13,17 @@ import com.emmaguy.videopocket.storage.UserStorage;
 import com.emmaguy.videopocket.storage.VideoStorage;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.internal.LinkedHashTreeMap;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.RequestBody;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import rx.Observable;
 import rx.Scheduler;
@@ -81,7 +86,26 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                 .doOnNext(typedInput -> view.showLoadingView())
                 .observeOn(ioScheduler)
                 .flatMap(requestBody -> retrieveVideosFromPocket(view, requestBody))
-                .flatMap(pocketVideos -> filterNonYouTubeVideosAndRetrieveDurations(view, pocketVideos))
+                .map(VideoGrouper.groupBySource())
+                .flatMap(videosBySource -> {
+                    final List<Observable<Video>> videoRetrievingObservables = new ArrayList<>();
+                    final TreeMap<Integer, Collection<String>> otherSources = new TreeMap<>();
+
+                    for (Map.Entry<String, Collection<PocketVideo>> videoMapEntry : videosBySource.entrySet()) {
+                        if (videoMapEntry.getKey().contains("youtube")) {
+                            videoRetrievingObservables.add(filterNonYouTubeVideosAndRetrieveDurations(view, videoMapEntry.getValue()));
+                        } else {
+                            int size = videoMapEntry.getValue().size();
+                            if (!otherSources.containsKey(size)) {
+                                otherSources.put(size, new ArrayList<>());
+                            }
+                            otherSources.get(size).add(videoMapEntry.getKey());
+                        }
+                    }
+
+                    userStorage.storeOtherSources(otherSources.descendingMap());
+                    return Observable.merge(videoRetrievingObservables);
+                })
                 .toSortedList(VideoSorter.sort(userStorage))
                 .doOnNext(videoStorage::storeVideos)
                 .observeOn(uiScheduler)
@@ -132,6 +156,18 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                         .toList())
                 .observeOn(uiScheduler)
                 .subscribe(view::showVideos, throwable -> Timber.e(throwable, "Failed to filter videos on search query")));
+
+        unsubscribeOnViewDetach(view.otherSourcesAction()
+                .map(aVoid -> {
+                    final StringBuilder builder = new StringBuilder();
+                    builder.append(resources.getString(R.string.other_source_intro));
+                    for (Map.Entry<Integer, Collection<String>> item : userStorage.getOtherSources().entrySet()) {
+                        builder.append(resources.getString(R.string.other_sources_format, item.getKey(), StringUtils.join(", ", item.getValue())));
+                    }
+
+                    return builder.toString();
+                })
+                .subscribe(view::showOtherSources, throwable -> Timber.e(throwable, "Failed to get other sources")));
     }
 
     @NonNull
@@ -157,7 +193,7 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
     }
 
     @NonNull
-    private Observable<Video> filterNonYouTubeVideosAndRetrieveDurations(@NonNull final View view, @NonNull final List<PocketVideo> pocketVideos) {
+    private Observable<Video> filterNonYouTubeVideosAndRetrieveDurations(@NonNull final View view, @NonNull final Collection<PocketVideo> pocketVideos) {
         return Observable.from(pocketVideos)
                 .map(pocketVideo -> youTubeParser.getYouTubeId(pocketVideo.getUrl()))
                 .filter(youTubeId -> !StringUtils.isEmpty(youTubeId))
@@ -180,6 +216,7 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                 .flatMap(Observable::from)
                 .filter(r -> r.getContentDetails() != null)
                 .map(r -> new YouTubeVideo(r.getId(), r.getContentDetails().getDuration()))
+                .filter(youTubeVideo -> youTubeVideo.getDuration() != null)
                 .map(youTubeVideo -> {
                     for (PocketVideo pocketVideo : pocketVideos) {
                         if (pocketVideo.getUrl().contains(youTubeVideo.getId())) {
@@ -195,14 +232,16 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
         @NonNull Observable<String> searchQueryChanged();
         @NonNull Observable<SortOrder> sortOrderChanged();
         @NonNull Observable<Pair<Video, Long>> archiveAction();
+        @NonNull Observable<Void> otherSourcesAction();
 
-        void archiveItem(final @NonNull Video videoToArchive);
-        void showVideos(final @NonNull List<Video> videos);
+        void archiveItem(@NonNull final Video videoToArchive);
+        void showVideos(@NonNull final List<Video> videos);
 
         void showLoadingView();
         void hideLoadingView();
 
         void showError();
+        void showOtherSources(@NonNull final String otherSources);
     }
 
     private static class ArchiveAction {

@@ -6,6 +6,7 @@ import android.content.res.Resources;
 import android.support.annotation.NonNull;
 
 import com.emmaguy.videopocket.R;
+import com.google.gson.Gson;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
@@ -34,6 +35,10 @@ import rx.schedulers.Schedulers;
 
     @Provides @Singleton Resources provideResources() {
         return context.getResources();
+    }
+
+    @Provides @Singleton Gson provideGson() {
+        return new Gson();
     }
 
     @Provides @Singleton SharedPreferences provideSharedPreferences(Resources resources) {

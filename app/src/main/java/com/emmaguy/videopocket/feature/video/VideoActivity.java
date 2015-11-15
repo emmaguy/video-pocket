@@ -21,10 +21,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
-import com.emmaguy.videopocket.feature.ActivityComponent;
+import com.emmaguy.videopocket.R;
 import com.emmaguy.videopocket.common.base.BaseActivity;
 import com.emmaguy.videopocket.common.base.BasePresenter;
-import com.emmaguy.videopocket.R;
+import com.emmaguy.videopocket.feature.ActivityComponent;
 import com.emmaguy.videopocket.storage.UserStorage;
 
 import org.threeten.bp.LocalDateTime;
@@ -42,6 +42,7 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     private final PublishSubject<Pair<Video, Long>> archiveSubject = PublishSubject.create();
     private final PublishSubject<SortOrder> sortOrderSubject = PublishSubject.create();
     private final PublishSubject<String> searchQuerySubject = PublishSubject.create();
+    private final PublishSubject<Void> otherSourcesSubject = PublishSubject.create();
     private final PublishSubject<Void> refreshSubject = PublishSubject.create();
 
     @Inject VideoPresenter videoPresenter;
@@ -90,7 +91,8 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         final ItemTouchHelper itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.Callback() {
-            @Override public int getMovementFlags(final RecyclerView recyclerView, final RecyclerView.ViewHolder viewHolder) {
+            @Override
+            public int getMovementFlags(final RecyclerView recyclerView, final RecyclerView.ViewHolder viewHolder) {
                 return makeFlag(ItemTouchHelper.ACTION_STATE_IDLE, ItemTouchHelper.START) | makeFlag(ItemTouchHelper.ACTION_STATE_SWIPE, ItemTouchHelper.START | ItemTouchHelper.END);
             }
 
@@ -142,6 +144,8 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
             });
             builder.show();
             return true;
+        } else if (item.getItemId() == R.id.menu_other_sources) {
+            otherSourcesSubject.onNext(null);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -162,7 +166,11 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
         return archiveSubject;
     }
 
-    @Override public void archiveItem(final @NonNull Video video) {
+    @NonNull @Override public Observable<Void> otherSourcesAction() {
+        return otherSourcesSubject;
+    }
+
+    @Override public void archiveItem(@NonNull final Video video) {
         Snackbar.make(rootViewGroup, R.string.video_moved_to_archive, Snackbar.LENGTH_LONG).show();
         adapter.removeVideo(video);
     }
@@ -181,6 +189,13 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
 
     @Override public void showError() {
         Snackbar.make(rootViewGroup, R.string.something_went_wrong_whilst_refreshing, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override public void showOtherSources(@NonNull final String otherSources) {
+        new AlertDialog.Builder(this, R.style.AppThemeDialog)
+                .setTitle(R.string.other_sources)
+                .setMessage(otherSources)
+                .show();
     }
 
     @Override public boolean onQueryTextSubmit(final String query) {

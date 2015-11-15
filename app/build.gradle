@@ -61,7 +61,7 @@ dependencies {
     // RxJava
     compile 'io.reactivex:rxjava:1.0.14'
     compile 'io.reactivex:rxandroid:1.0.1'
-    compile 'com.jakewharton.rxbinding:rxbinding:0.2.0'
+    compile 'com.jakewharton.rxbinding:rxbinding:0.3.0'
     compile 'com.squareup.retrofit:adapter-rxjava:2.0.0-beta2'
 
     testCompile 'junit:junit:4.12'

@@ -9,11 +9,11 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module public final class StorageModule {
-    @Provides UserStorage provideUserStorage(SharedPreferences sharedPreferences, Resources resources) {
-        return new SharedPreferencesUserStorage(sharedPreferences, resources);
+    @Provides UserStorage provideUserStorage(SharedPreferences sharedPreferences, Resources resources, Gson gson) {
+        return new SharedPreferencesUserStorage(sharedPreferences, resources, gson);
     }
 
-    @Provides VideoStorage provideVideoStorage(SharedPreferences sharedPreferences, Resources resources) {
-        return new SharedPreferencesVideoStorage(sharedPreferences, resources, new Gson());
+    @Provides VideoStorage provideVideoStorage(SharedPreferences sharedPreferences, Resources resources, Gson gson) {
+        return new SharedPreferencesVideoStorage(sharedPreferences, resources, gson);
     }
 }

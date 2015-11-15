@@ -20,4 +20,9 @@
         android:icon="@drawable/ic_sort"
         android:title="@string/sort_order"
         app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/menu_other_sources"
+        android:title="@string/other_sources"
+        app:showAsAction="never" />
 </menu>

@@ -10,5 +10,6 @@
     <string name="pref_key_request_token">request_token</string>
 
     <string name="pref_key_videos">key_videos</string>
-    <string name="pref_key_sort_order" />
+    <string name="pref_key_sort_order">key_sort</string>
+    <string name="pref_key_other_sources">key_other_sources</string>
 </resources>
