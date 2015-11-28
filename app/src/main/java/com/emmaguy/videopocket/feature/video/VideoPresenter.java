@@ -13,14 +13,12 @@ import com.emmaguy.videopocket.storage.UserStorage;
 import com.emmaguy.videopocket.storage.VideoStorage;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.internal.LinkedHashTreeMap;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.RequestBody;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -215,12 +213,12 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                 .map(result -> result.response().body().getItems())
                 .flatMap(Observable::from)
                 .filter(r -> r.getContentDetails() != null)
-                .map(r -> new YouTubeVideo(r.getId(), r.getContentDetails().getDuration()))
-                .filter(youTubeVideo -> youTubeVideo.getDuration() != null)
+                .map(r -> new YouTubeVideo(r.getId(), r.getContentDetails().getDuration(), r.getStatistics().getViewCount()))
                 .map(youTubeVideo -> {
                     for (PocketVideo pocketVideo : pocketVideos) {
                         if (pocketVideo.getUrl().contains(youTubeVideo.getId())) {
-                            return new Video(pocketVideo.getId(), pocketVideo.getTitle(), pocketVideo.getUrl(), youTubeVideo.getDuration());
+                            return new Video(pocketVideo.getId(), pocketVideo.getTitle(), pocketVideo.getUrl(),
+                                    youTubeVideo.getDuration(), youTubeVideo.getViewCount());
                         }
                     }
                     return null;

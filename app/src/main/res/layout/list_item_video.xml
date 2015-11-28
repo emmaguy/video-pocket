@@ -13,7 +13,7 @@
     android:paddingStart="@dimen/padding_medium">
 
     <TextView
-        android:id="@+id/videos_duration"
+        android:id="@+id/video_duration"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
@@ -21,20 +21,34 @@
         android:layout_alignParentTop="true"
         android:layout_marginTop="@dimen/padding_medium"
         android:fontFamily="sans-serif-regular"
-        android:textColor="@color/secondary_text"
-        android:textSize="16sp"
+        android:gravity="center_vertical"
+        android:textColor="@color/primary_text"
+        android:textSize="14sp"
         tools:text="10:12" />
 
     <TextView
-        android:id="@+id/videos_title"
+        android:id="@+id/video_view_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/video_duration"
+        android:layout_marginTop="@dimen/padding_medium"
+        android:fontFamily="sans-serif-regular"
+        android:textColor="@color/secondary_text"
+        android:textSize="12sp"
+        tools:text="123456 views" />
+
+    <TextView
+        android:id="@+id/video_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_alignTop="@id/videos_duration"
-        android:layout_toLeftOf="@id/videos_duration"
-        android:layout_toStartOf="@id/videos_duration"
-        android:fontFamily="sans-serif-mediun"
+        android:layout_alignTop="@id/video_duration"
+        android:layout_toLeftOf="@id/video_duration"
+        android:layout_toStartOf="@id/video_duration"
+        android:fontFamily="sans-serif"
         android:gravity="center_vertical"
         android:maxLines="2"
         android:paddingEnd="@dimen/padding_medium"

@@ -32,13 +32,7 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
 
     @Override public void onBindViewHolder(final ViewHolder holder, final int position) {
         final Video video = videos.get(position);
-        holder.title.setText(video.getTitle());
-
-        final Duration duration = video.getDuration();
-
-        final long durationInMinutes = duration.getSeconds() / (SECONDS_IN_A_MINUTE * SECONDS_IN_A_MINUTE);
-        final long durationInSeconds = (duration.getSeconds() % (SECONDS_IN_A_MINUTE * SECONDS_IN_A_MINUTE)) / SECONDS_IN_A_MINUTE;
-        holder.duration.setText(String.format("%d:%02d", durationInMinutes, durationInSeconds));
+        holder.setVideo(video);
     }
 
     @Override public int getItemCount() {
@@ -67,8 +61,9 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
     static class ViewHolder extends RecyclerView.ViewHolder {
         private final List<Video> videos;
 
-        @Bind(R.id.videos_title) TextView title;
-        @Bind(R.id.videos_duration) TextView duration;
+        @Bind(R.id.video_title) TextView title;
+        @Bind(R.id.video_duration) TextView duration;
+        @Bind(R.id.video_view_count) TextView viewCount;
 
         ViewHolder(@NonNull final View view, @NonNull final List<Video> videos) {
             super(view);
@@ -80,6 +75,16 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
         @OnClick(R.id.videos_video_item_container) void onViewClicked() {
             final Video video = videos.get(getAdapterPosition());
             itemView.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(video.getUrl())));
+        }
+
+        private void setVideo(@NonNull final Video video) {
+            title.setText(video.getTitle());
+            viewCount.setText(title.getResources().getString(R.string.views_format, video.getViewCount()));
+
+            final Duration dur = video.getDuration();
+            final long durationInMinutes = dur.getSeconds() / (SECONDS_IN_A_MINUTE * SECONDS_IN_A_MINUTE);
+            final long durationInSeconds = (dur.getSeconds() % (SECONDS_IN_A_MINUTE * SECONDS_IN_A_MINUTE)) / SECONDS_IN_A_MINUTE;
+            duration.setText(String.format("%d:%02d", durationInMinutes, durationInSeconds));
         }
     }
 }

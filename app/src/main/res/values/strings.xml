@@ -20,4 +20,6 @@
     <string name="other_sources">Other sources</string>
     <string name="other_sources_format">\n%1$d video(s) from source(s): %2$s \n\n</string>
     <string name="other_source_intro">Other video sources in your Pocket queue:\n</string>
+
+    <string name="views_format">%1$s views</string>
 </resources>

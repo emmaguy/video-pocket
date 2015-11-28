@@ -9,6 +9,6 @@ import retrofit.http.QueryMap;
 import rx.Observable;
 
 interface YouTubeApi {
-    @GET("/youtube/v3/videos?part=contentDetails") Observable<Result<YouTubeVideoResponse>> videoData(
+    @GET("/youtube/v3/videos?part=contentDetails,statistics") Observable<Result<YouTubeVideoResponse>> videoData(
             @QueryMap(encoded = false) final Map<String, String> videoIds, @Query("key") final String apiKey);
 }

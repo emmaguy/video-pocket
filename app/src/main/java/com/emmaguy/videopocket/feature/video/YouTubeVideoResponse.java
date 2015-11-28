@@ -1,11 +1,9 @@
 package com.emmaguy.videopocket.feature.video;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.util.List;
 
 class YouTubeVideoResponse {
-    @SerializedName("items") private final List<YouTubeResponse> items;
+    private final List<YouTubeResponse> items;
 
     YouTubeVideoResponse(List<YouTubeResponse> items) {
         this.items = items;
@@ -16,16 +14,22 @@ class YouTubeVideoResponse {
     }
 
     static class YouTubeResponse {
-        @SerializedName("contentDetails") private final ContentDetails contentDetails;
-        @SerializedName("id") private final String id;
+        private final Statistics statistics;
+        private final ContentDetails contentDetails;
+        private final String id;
 
-        YouTubeResponse(ContentDetails contentDetails, String id) {
+        YouTubeResponse(ContentDetails contentDetails, Statistics statistics, String id) {
             this.contentDetails = contentDetails;
             this.id = id;
+            this.statistics = statistics;
         }
 
         ContentDetails getContentDetails() {
             return contentDetails;
+        }
+
+        Statistics getStatistics() {
+            return statistics;
         }
 
         String getId() {
@@ -33,7 +37,7 @@ class YouTubeVideoResponse {
         }
 
         static class ContentDetails {
-            @SerializedName("duration") private final String duration;
+            private final String duration;
 
             ContentDetails(String duration) {
                 this.duration = duration;
@@ -41,6 +45,18 @@ class YouTubeVideoResponse {
 
             String getDuration() {
                 return duration;
+            }
+        }
+
+        class Statistics {
+            private final long viewCount;
+
+            Statistics(final long viewCount) {
+                this.viewCount = viewCount;
+            }
+
+            long getViewCount() {
+                return viewCount;
             }
         }
     }
