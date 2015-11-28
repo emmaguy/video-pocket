@@ -221,7 +221,7 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
                 buildYouTubeResponse("PT1S", "3"),
                 buildYouTubeResponse("PT1M", "4"),
                 buildYouTubeResponse("PT3M", "5"),
-                new YouTubeVideoResponse.YouTubeResponse(null, "6")
+                new YouTubeVideoResponse.YouTubeResponse(null, null, "6")
         ));
         when(youTubeApi.videoData(any(), anyString())).thenReturn(Observable.just(Result.response(Response.success(response))));
 
@@ -241,7 +241,8 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
 
     @NonNull
     private YouTubeVideoResponse.YouTubeResponse buildYouTubeResponse(@NonNull final String duration, @NonNull final String id) {
-        return new YouTubeVideoResponse.YouTubeResponse(new YouTubeVideoResponse.YouTubeResponse.ContentDetails(duration), id);
+        return new YouTubeVideoResponse.YouTubeResponse(new YouTubeVideoResponse.YouTubeResponse.ContentDetails(duration),
+                new YouTubeVideoResponse.YouTubeResponse.Statistics(1), id);
     }
 
     @Test

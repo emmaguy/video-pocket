@@ -48,7 +48,7 @@ class YouTubeVideoResponse {
             }
         }
 
-        class Statistics {
+        static class Statistics {
             private final long viewCount;
 
             Statistics(final long viewCount) {
