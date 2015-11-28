@@ -1,7 +1,6 @@
 package com.emmaguy.videopocket.feature.video;
 
 import android.content.Intent;
-import android.content.res.Resources;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -32,16 +31,14 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
     }
 
     @Override public void onBindViewHolder(final ViewHolder holder, final int position) {
-        final Resources resources = holder.mTitle.getResources();
-
         final Video video = videos.get(position);
-        holder.mTitle.setText(resources.getString(R.string.row_title_format, position + 1, video.getTitle()));
+        holder.title.setText(video.getTitle());
 
         final Duration duration = video.getDuration();
 
         final long durationInMinutes = duration.getSeconds() / (SECONDS_IN_A_MINUTE * SECONDS_IN_A_MINUTE);
         final long durationInSeconds = (duration.getSeconds() % (SECONDS_IN_A_MINUTE * SECONDS_IN_A_MINUTE)) / SECONDS_IN_A_MINUTE;
-        holder.mDuration.setText(String.format("%d:%02d", durationInMinutes, durationInSeconds));
+        holder.duration.setText(String.format("%d:%02d", durationInMinutes, durationInSeconds));
     }
 
     @Override public int getItemCount() {
@@ -68,20 +65,20 @@ class VideoAdapter extends RecyclerView.Adapter<VideoAdapter.ViewHolder> {
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        private final List<Video> mVideos;
+        private final List<Video> videos;
 
-        @Bind(R.id.videos_title) TextView mTitle;
-        @Bind(R.id.videos_duration) TextView mDuration;
+        @Bind(R.id.videos_title) TextView title;
+        @Bind(R.id.videos_duration) TextView duration;
 
         ViewHolder(@NonNull final View view, @NonNull final List<Video> videos) {
             super(view);
-            mVideos = videos;
+            this.videos = videos;
 
             ButterKnife.bind(this, view);
         }
 
         @OnClick(R.id.videos_video_item_container) void onViewClicked() {
-            final Video video = mVideos.get(getAdapterPosition());
+            final Video video = videos.get(getAdapterPosition());
             itemView.getContext().startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(video.getUrl())));
         }
     }
