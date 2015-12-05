@@ -142,7 +142,7 @@ class LoginPresenter extends BasePresenter<LoginPresenter.View> {
         void showRequestTokenError();
         void showAccessTokenError();
 
-        void startBrowser(final @NonNull String url);
+        void startBrowser(@NonNull final String url);
         void startVideos();
     }
 }
