@@ -77,45 +77,24 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
             view.showVideos(cachedVideos);
         }
 
-        final String json = gson.toJson(new VideosRequestHolder(resources.getString(R.string.pocket_app_id), userStorage.getAccessToken(), "video", "simple"));
-        final RequestBody body = RequestBody.create(MEDIA_TYPE, json);
         final Observable<List<Video>> videoObservable =
                 view.refreshAction().startWith(Observable.just(null))
                         .filter(aVoid -> !isRetrievingInProgress)
                         .doOnNext(aVoid -> isRetrievingInProgress = true)
-                        .flatMap(aVoid -> Observable.just(body)
-                                .observeOn(uiScheduler)
-                                .doOnNext(typedInput -> view.showLoadingView())
-                                .observeOn(ioScheduler)
+                        .doOnNext(typedInput -> view.showLoadingView())
+                        .flatMap(aVoid -> Observable.just(buildRequest())
                                 .flatMap(requestBody -> retrieveVideosFromPocket(view, requestBody))
                                 .map(VideoGrouper.groupBySource())
-                                .flatMap(videosBySource -> {
-                                    final List<Observable<Video>> videoRetrievingObservables = new ArrayList<>();
-                                    final TreeMap<Integer, Collection<String>> otherSources = new TreeMap<>();
-
-                                    for (Map.Entry<String, Collection<PocketVideo>> videoMapEntry : videosBySource.entrySet()) {
-                                        if (videoMapEntry.getKey().contains("youtube")) {
-                                            videoRetrievingObservables.add(filterNonYouTubeVideosAndRetrieveDurations(view, videoMapEntry.getValue()));
-                                        } else {
-                                            int size = videoMapEntry.getValue().size();
-                                            if (!otherSources.containsKey(size)) {
-                                                otherSources.put(size, new ArrayList<>());
-                                            }
-                                            otherSources.get(size).add(videoMapEntry.getKey());
-                                        }
-                                    }
-
-                                    userStorage.storeOtherSources(otherSources.descendingMap());
-                                    return Observable.merge(videoRetrievingObservables);
-                                })
+                                .flatMap(videosBySource -> retrieveDurationsAndStoreUnsupportedSources(view, videosBySource))
                                 .toSortedList(VideoSorter.sort(userStorage))
                                 .doOnNext(videoStorage::storeVideos)
-                                .observeOn(uiScheduler)
-                                .doOnNext(avoid -> view.hideLoadingView()))
+                                .subscribeOn(ioScheduler))
+                        .observeOn(uiScheduler)
+                        .doOnNext(avoid -> view.hideLoadingView())
                         .doOnNext(av -> isRetrievingInProgress = false);
 
-        unsubscribeOnViewDetach(Observable.combineLatest(videoObservable,
-                view.searchQueryChanged().startWith(""), Pair::create)
+        unsubscribeOnViewDetach(Observable.combineLatest(videoObservable, view.searchQueryChanged().startWith(""),
+                Pair::create)
                 .flatMap(pair -> Observable.from(pair.first)
                         .filter(video -> video.getTitle().toLowerCase().contains(pair.second.toLowerCase()))
                         .toList())
@@ -134,8 +113,10 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                 .doOnNext(videoDateTimePair -> view.showLoadingView())
                 .observeOn(ioScheduler)
                 .flatMap(videoDateTimePair -> {
-                    final String action = "[" + gson.toJson(new ArchiveAction(String.valueOf(videoDateTimePair.first.getId()), videoDateTimePair.second)) + "]";
-                    return pocketApi.archive(resources.getString(R.string.pocket_app_id), userStorage.getAccessToken(), action)
+                    final String itemId = String.valueOf(videoDateTimePair.first.getId());
+                    final String action = "[" + gson.toJson(new ArchiveAction(itemId, videoDateTimePair.second)) + "]";
+                    final String appId = resources.getString(R.string.pocket_app_id);
+                    return pocketApi.archive(appId, userStorage.getAccessToken(), action)
                             .map(result -> {
                                 if (Results.isSuccess(result) && result.response().body().status == POCKET_ARCHIVE_STATUS_SUCCESS) {
                                     return videoDateTimePair.first;
@@ -166,8 +147,37 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                 .subscribe(view::showOtherSources, throwable -> Timber.e(throwable, "Failed to get other sources")));
     }
 
+    @NonNull private RequestBody buildRequest() {
+        final String appId = resources.getString(R.string.pocket_app_id);
+        final String json = gson.toJson(new VideosRequestHolder(appId, userStorage.getAccessToken(), "video", "simple"));
+        return RequestBody.create(MEDIA_TYPE, json);
+    }
+
     @NonNull
-    private Observable<ArrayList<PocketVideo>> retrieveVideosFromPocket(@NonNull final View view, @NonNull final RequestBody requestBody) {
+    private Observable<Video> retrieveDurationsAndStoreUnsupportedSources(final @NonNull View view,
+                                                                          final Map<String, Collection<PocketVideo>> videosBySource) {
+        final List<Observable<Video>> videoRetrievingObservables = new ArrayList<>();
+        final TreeMap<Integer, Collection<String>> otherSources = new TreeMap<>();
+
+        for (Map.Entry<String, Collection<PocketVideo>> videoMapEntry : videosBySource.entrySet()) {
+            if (videoMapEntry.getKey().contains("youtube")) {
+                videoRetrievingObservables.add(filterNonYouTubeVideosAndRetrieveDurations(view, videoMapEntry.getValue()));
+            } else {
+                int size = videoMapEntry.getValue().size();
+                if (!otherSources.containsKey(size)) {
+                    otherSources.put(size, new ArrayList<>());
+                }
+                otherSources.get(size).add(videoMapEntry.getKey());
+            }
+        }
+
+        userStorage.storeOtherSources(otherSources.descendingMap());
+        return Observable.merge(videoRetrievingObservables);
+    }
+
+    @NonNull
+    private Observable<ArrayList<PocketVideo>> retrieveVideosFromPocket(@NonNull final View view,
+                                                                        @NonNull final RequestBody requestBody) {
         return pocketApi.videos(requestBody)
                 .observeOn(uiScheduler)
                 .doOnNext(result -> {
@@ -189,7 +199,8 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
     }
 
     @NonNull
-    private Observable<Video> filterNonYouTubeVideosAndRetrieveDurations(@NonNull final View view, @NonNull final Collection<PocketVideo> pocketVideos) {
+    private Observable<Video> filterNonYouTubeVideosAndRetrieveDurations(@NonNull final View view,
+                                                                         @NonNull final Collection<PocketVideo> pocketVideos) {
         return Observable.from(pocketVideos)
                 .map(pocketVideo -> youTubeParser.getYouTubeId(pocketVideo.getUrl()))
                 .filter(youTubeId -> !StringUtils.isEmpty(youTubeId))
