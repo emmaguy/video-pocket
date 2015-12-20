@@ -38,6 +38,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -113,8 +114,12 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     }
 
     @NonNull private PocketVideo buildYouTubeVideo(final String youTubeId, final long pocketId) {
+        return buildYouTubeVideo(youTubeId, pocketId, DEFAULT_TITLE);
+    }
+
+    @NonNull private PocketVideo buildYouTubeVideo(final String youTubeId, final long pocketId, final String title) {
         final String youTubeUrl =  "http://www.youtube?id=" + youTubeId;
-        final PocketVideo pocketVideo = new PocketVideo(pocketId, DEFAULT_TITLE, youTubeUrl);
+        final PocketVideo pocketVideo = new PocketVideo(pocketId, title, youTubeUrl);
         when(youTubeParser.getYouTubeId(youTubeUrl)).thenReturn(youTubeId);
         return pocketVideo;
     }
@@ -365,24 +370,65 @@ public class VideoPresenterTest extends BasePresenterTest<VideoPresenter, VideoP
     }
 
     @Test public void onSearchQueryChanged_videosAreFilteredCaseInsensitive() throws Exception {
+        final Map<String, PocketVideo> map = new HashMap<>();
+        map.put("1", buildYouTubeVideo("1", 1, "test"));
+        map.put("2", buildYouTubeVideo("2", 2, "nope"));
+
+        when(pocketApi.videos(any())).thenReturn(Observable.just(Result.response(Response.success(new PocketVideoResponse(map)))));
+
+        final YouTubeVideoResponse response = new YouTubeVideoResponse(Arrays.asList(
+                buildYouTubeResponse("PT2M", "1"),
+                buildYouTubeResponse("PT2S", "2")
+        ));
+        when(youTubeApi.videoData(any(), anyString())).thenReturn(Observable.just(Result.response(Response.success(response))));
+
         presenterOnViewAttached();
 
-        final Video videoThatMatches = mockVideo(1);
-        when(videoThatMatches.getTitle()).thenReturn("test");
-
-        final Video videoThatDoesntMatch = mockVideo(2);
-        when(videoThatDoesntMatch.getTitle()).thenReturn("nonmatch");
-
-        final List<Video> value = Arrays.asList(videoThatDoesntMatch, videoThatMatches);
-        when(videoStorage.getVideos()).thenReturn(value);
-
         searchQuerySubject.onNext("TE");
+        testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
 
         verify(view).showVideos(videosCaptor.capture());
 
         final List<Video> sortedVideos = videosCaptor.getValue();
         assertThat(sortedVideos.size(), equalTo(1));
         assertThat(sortedVideos.get(0).getTitle(), equalTo("test"));
+    }
+
+    @Test public void onRefreshAction_whilstSearchQueryIsActive_doesNotResetSearch() throws Exception {
+        final Map<String, PocketVideo> map = new HashMap<>();
+        map.put("1", buildYouTubeVideo("1", 1, "title"));
+        map.put("2", buildYouTubeVideo("2", 2, "nope"));
+        map.put("3", buildYouTubeVideo("3", 3, "title"));
+        map.put("4", buildYouTubeVideo("4", 4, "nope"));
+        map.put("5", buildYouTubeVideo("5", 5, "title"));
+
+        when(pocketApi.videos(any())).thenReturn(Observable.just(Result.response(Response.success(new PocketVideoResponse(map)))));
+
+        final YouTubeVideoResponse response = new YouTubeVideoResponse(Arrays.asList(
+                buildYouTubeResponse("PT2M", "1"),
+                buildYouTubeResponse("PT2S", "2"),
+                buildYouTubeResponse("PT1S", "3"),
+                buildYouTubeResponse("PT1M", "4"),
+                buildYouTubeResponse("PT3M", "5")
+        ));
+        when(youTubeApi.videoData(any(), anyString())).thenReturn(Observable.just(Result.response(Response.success(response))));
+
+        presenterOnViewAttached();
+
+        searchQuerySubject.onNext("title");
+
+        testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+        reset(view);
+
+        refreshActionSubject.onNext(null);
+
+        testScheduler.advanceTimeBy(1, TimeUnit.MILLISECONDS);
+
+        verify(view).showVideos(videosCaptor.capture());
+
+        final List<Video> sortedVideos = videosCaptor.getValue();
+        assertThat(sortedVideos.size(), equalTo(3));
+        assertThat(sortedVideos.get(0).getTitle(), equalTo("title"));
     }
 
     @Test public void onArchiveAction_whenArchiveIsSuccessful_archiveItemOnViewAndUpdatesCache() throws Exception {

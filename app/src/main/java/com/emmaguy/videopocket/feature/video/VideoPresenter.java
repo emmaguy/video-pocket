@@ -79,43 +79,48 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
 
         final String json = gson.toJson(new VideosRequestHolder(resources.getString(R.string.pocket_app_id), userStorage.getAccessToken(), "video", "simple"));
         final RequestBody body = RequestBody.create(MEDIA_TYPE, json);
-        final Observable<List<Video>> videoObservable = Observable.just(body)
-                .observeOn(uiScheduler)
-                .doOnNext(typedInput -> view.showLoadingView())
-                .observeOn(ioScheduler)
-                .flatMap(requestBody -> retrieveVideosFromPocket(view, requestBody))
-                .map(VideoGrouper.groupBySource())
-                .flatMap(videosBySource -> {
-                    final List<Observable<Video>> videoRetrievingObservables = new ArrayList<>();
-                    final TreeMap<Integer, Collection<String>> otherSources = new TreeMap<>();
+        final Observable<List<Video>> videoObservable =
+                view.refreshAction().startWith(Observable.just(null))
+                        .filter(aVoid -> !isRetrievingInProgress)
+                        .doOnNext(aVoid -> isRetrievingInProgress = true)
+                        .flatMap(aVoid -> Observable.just(body)
+                                .observeOn(uiScheduler)
+                                .doOnNext(typedInput -> view.showLoadingView())
+                                .observeOn(ioScheduler)
+                                .flatMap(requestBody -> retrieveVideosFromPocket(view, requestBody))
+                                .map(VideoGrouper.groupBySource())
+                                .flatMap(videosBySource -> {
+                                    final List<Observable<Video>> videoRetrievingObservables = new ArrayList<>();
+                                    final TreeMap<Integer, Collection<String>> otherSources = new TreeMap<>();
 
-                    for (Map.Entry<String, Collection<PocketVideo>> videoMapEntry : videosBySource.entrySet()) {
-                        if (videoMapEntry.getKey().contains("youtube")) {
-                            videoRetrievingObservables.add(filterNonYouTubeVideosAndRetrieveDurations(view, videoMapEntry.getValue()));
-                        } else {
-                            int size = videoMapEntry.getValue().size();
-                            if (!otherSources.containsKey(size)) {
-                                otherSources.put(size, new ArrayList<>());
-                            }
-                            otherSources.get(size).add(videoMapEntry.getKey());
-                        }
-                    }
+                                    for (Map.Entry<String, Collection<PocketVideo>> videoMapEntry : videosBySource.entrySet()) {
+                                        if (videoMapEntry.getKey().contains("youtube")) {
+                                            videoRetrievingObservables.add(filterNonYouTubeVideosAndRetrieveDurations(view, videoMapEntry.getValue()));
+                                        } else {
+                                            int size = videoMapEntry.getValue().size();
+                                            if (!otherSources.containsKey(size)) {
+                                                otherSources.put(size, new ArrayList<>());
+                                            }
+                                            otherSources.get(size).add(videoMapEntry.getKey());
+                                        }
+                                    }
 
-                    userStorage.storeOtherSources(otherSources.descendingMap());
-                    return Observable.merge(videoRetrievingObservables);
-                })
-                .toSortedList(VideoSorter.sort(userStorage))
-                .doOnNext(videoStorage::storeVideos)
-                .observeOn(uiScheduler)
-                .doOnNext(aVoid -> view.hideLoadingView());
+                                    userStorage.storeOtherSources(otherSources.descendingMap());
+                                    return Observable.merge(videoRetrievingObservables);
+                                })
+                                .toSortedList(VideoSorter.sort(userStorage))
+                                .doOnNext(videoStorage::storeVideos)
+                                .observeOn(uiScheduler)
+                                .doOnNext(avoid -> view.hideLoadingView()))
+                        .doOnNext(av -> isRetrievingInProgress = false);
 
-        unsubscribeOnViewDetach(view.refreshAction().startWith(Observable.just(null))
-                .filter(av -> !isRetrievingInProgress)
-                .doOnNext(av -> isRetrievingInProgress = true)
-                .flatMap(aVoid -> videoObservable)
-                .doOnNext(av -> isRetrievingInProgress = false)
+        unsubscribeOnViewDetach(Observable.combineLatest(videoObservable,
+                view.searchQueryChanged().startWith(""), Pair::create)
+                .flatMap(pair -> Observable.from(pair.first)
+                        .filter(video -> video.getTitle().toLowerCase().contains(pair.second.toLowerCase()))
+                        .toList())
                 .observeOn(uiScheduler)
-                .subscribe(view::showVideos, throwable -> Timber.e(throwable, "Failed to get videos")));
+                .subscribe(view::showVideos, throwable -> Timber.e(throwable, "Failed show videos")));
 
         unsubscribeOnViewDetach(view.sortOrderChanged()
                 .doOnNext(sortOrder -> view.showLoadingView())
@@ -147,13 +152,6 @@ class VideoPresenter extends BasePresenter<VideoPresenter.View> {
                     videoStorage.storeVideos(videos);
                 })
                 .subscribe(view::archiveItem, throwable -> Timber.e(throwable, "Failed to archive video")));
-
-        unsubscribeOnViewDetach(view.searchQueryChanged()
-                .flatMap(searchQuery -> Observable.from(videoStorage.getVideos())
-                        .filter(video -> video.getTitle().toLowerCase().contains(searchQuery.toLowerCase()))
-                        .toList())
-                .observeOn(uiScheduler)
-                .subscribe(view::showVideos, throwable -> Timber.e(throwable, "Failed to filter videos on search query")));
 
         unsubscribeOnViewDetach(view.otherSourcesAction()
                 .map(aVoid -> {
