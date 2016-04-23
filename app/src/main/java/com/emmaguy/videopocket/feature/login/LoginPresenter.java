@@ -10,10 +10,10 @@ import com.emmaguy.videopocket.common.base.PresenterView;
 import com.emmaguy.videopocket.storage.UserStorage;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.RequestBody;
 
-import retrofit.Result;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import retrofit2.adapter.rxjava.Result;
 import rx.Observable;
 import rx.Scheduler;
 import timber.log.Timber;

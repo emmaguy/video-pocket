@@ -7,8 +7,9 @@ import com.google.gson.Gson;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import retrofit.Response;
-import retrofit.Result;
+import okhttp3.ResponseBody;
+import retrofit2.Response;
+import retrofit2.adapter.rxjava.Result;
 import rx.Observable;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
@@ -63,8 +64,7 @@ public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginP
         return view;
     }
 
-    @Test
-    public void onViewAttached_whenHasAccessToken_shouldStartVideos() throws Exception {
+    @Test public void onViewAttached_whenHasAccessToken_shouldStartVideos() throws Exception {
         when(userStorage.getAccessToken()).thenReturn(DEFAULT_ACCESS_TOKEN);
 
         presenterOnViewAttached();
@@ -75,16 +75,14 @@ public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginP
         verifyZeroInteractions(pocketAuthenticationApi);
     }
 
-    @Test
-    public void onViewAttached_whenHasNoAccessToken_subscribesToLoginActionAndReturnFromBrowserAction() throws Exception {
+    @Test public void onViewAttached_whenHasNoAccessToken_subscribesToLoginActionAndReturnFromBrowserAction() throws Exception {
         presenterOnViewAttached();
 
         verify(view).retrieveRequestToken();
         verify(view).returnFromBrowser();
     }
 
-    @Test
-    public void onLoginAction_pocketApiThrowsException_showRequestTokenError() throws Exception {
+    @Test public void onLoginAction_pocketApiThrowsException_showRequestTokenError() throws Exception {
         when(pocketAuthenticationApi.requestToken(any())).thenReturn(Observable.just(Result.error(new Throwable())));
 
         presenterOnViewAttached();
@@ -96,8 +94,7 @@ public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginP
         verify(view).showRequestTokenError();
     }
 
-    @Test
-    public void afterErrorWithOnLoginAction_onLoginActionWithValidResponse_startsBrowser() throws Exception {
+    @Test public void afterErrorWithOnLoginAction_onLoginActionWithValidResponse_startsBrowser() throws Exception {
         final RequestToken mockRequestToken = mock(RequestToken.class);
         when(mockRequestToken.getCode()).thenReturn(DEFAULT_REQUEST_TOKEN);
 
@@ -113,8 +110,7 @@ public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginP
         verify(view).startBrowser(anyString());
     }
 
-    @Test
-    public void onReturnFromBrowserAction_startVideos() throws Exception {
+    @Test public void onReturnFromBrowserAction_startVideos() throws Exception {
         presenterOnViewAttached();
         onReturnFromBrowserAction();
 
@@ -129,12 +125,11 @@ public class LoginPresenterTest extends BasePresenterTest<LoginPresenter, LoginP
         verify(view).startVideos();
     }
 
-    @Test
-    public void onReturnFromBrowserAction_pocketApiThrowsException_showAccessTokenError() throws Exception {
+    @Test public void onReturnFromBrowserAction_pocketApiThrowsException_showAccessTokenError() throws Exception {
         final RequestToken mockRequestToken = mock(RequestToken.class);
         when(mockRequestToken.getCode()).thenReturn(DEFAULT_REQUEST_TOKEN);
 
-        final Response mockResponse = Response.error(500, null);
+        final Response mockResponse = Response.error(500, mock(ResponseBody.class));
         final Result result = Result.response(mockResponse);
 
         when(pocketAuthenticationApi.accessToken(any())).thenReturn(Observable.just(result));

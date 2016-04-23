@@ -13,8 +13,6 @@ import com.emmaguy.videopocket.storage.UserStorage;
 import com.emmaguy.videopocket.storage.VideoStorage;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import com.squareup.okhttp.MediaType;
-import com.squareup.okhttp.RequestBody;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +21,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
 import rx.Observable;
 import rx.Scheduler;
 import timber.log.Timber;

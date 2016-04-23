@@ -8,7 +8,6 @@ import com.emmaguy.videopocket.BasePresenterTest;
 import com.emmaguy.videopocket.storage.UserStorage;
 import com.emmaguy.videopocket.storage.VideoStorage;
 import com.google.gson.Gson;
-import com.squareup.okhttp.RequestBody;
 
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -25,8 +24,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import retrofit.Response;
-import retrofit.Result;
+import okhttp3.RequestBody;
+import retrofit2.Response;
+import retrofit2.adapter.rxjava.Result;
 import rx.Observable;
 import rx.schedulers.Schedulers;
 import rx.schedulers.TestScheduler;

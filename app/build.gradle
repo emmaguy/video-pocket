@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'me.tatarka.retrolambda'
 apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: 'com.getkeepsafe.dexcount'
 
 android {
     compileSdkVersion 23
@@ -33,12 +34,12 @@ android {
 
 dependencies {
     // Date/time
-    compile 'com.jakewharton.threetenabp:threetenabp:1.0.2'
+    compile 'com.jakewharton.threetenabp:threetenabp:1.0.3'
 
     // Ui
-    compile 'com.android.support:appcompat-v7:23.1.1'
-    compile 'com.android.support:recyclerview-v7:23.1.1'
-    compile 'com.android.support:design:23.1.1'
+    compile 'com.android.support:appcompat-v7:23.3.0'
+    compile 'com.android.support:recyclerview-v7:23.3.0'
+    compile 'com.android.support:design:23.3.0'
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.github.castorflex.smoothprogressbar:library:1.1.0'
 
@@ -48,21 +49,20 @@ dependencies {
     apt 'com.google.dagger:dagger-compiler:2.0.1'
 
     // Logging
-    compile 'com.jakewharton.timber:timber:4.1.0'
+    compile 'com.jakewharton.timber:timber:4.1.1'
 
     // Network
-    compile 'com.squareup.retrofit:converter-gson:2.0.0-beta2'
-    compile 'com.squareup.retrofit:retrofit:2.0.0-beta2'
-    compile 'com.squareup.okhttp:okhttp:2.6.0'
+    compile 'com.squareup.retrofit2:retrofit:2.0.2'
+    compile 'com.squareup.retrofit2:converter-gson:2.0.2'
 
     // RxJava
-    compile 'io.reactivex:rxjava:1.0.14'
-    compile 'io.reactivex:rxandroid:1.0.1'
-    compile 'com.jakewharton.rxbinding:rxbinding:0.3.0'
-    compile 'com.squareup.retrofit:adapter-rxjava:2.0.0-beta2'
+    compile 'io.reactivex:rxjava:1.1.3'
+    compile 'io.reactivex:rxandroid:1.1.0'
+    compile 'com.jakewharton.rxbinding:rxbinding:0.4.0'
+    compile 'com.squareup.retrofit2:adapter-rxjava:2.0.2'
 
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.0.31-beta'
+    testCompile 'org.mockito:mockito-core:2.0.52-beta'
 }
 
 

@@ -2,10 +2,11 @@ package com.emmaguy.videopocket.feature.video;
 
 import java.util.Map;
 
-import retrofit.Result;
-import retrofit.http.GET;
-import retrofit.http.Query;
-import retrofit.http.QueryMap;
+
+import retrofit2.adapter.rxjava.Result;
+import retrofit2.http.GET;
+import retrofit2.http.Query;
+import retrofit2.http.QueryMap;
 import rx.Observable;
 
 interface YouTubeApi {
