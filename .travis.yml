@@ -18,5 +18,5 @@ before_install:
 jdk: oraclejdk8
 language: android
 script: 
-  - "./gradlew build -PdisablePreDex"
+  - "./gradlew assembleDebug -PdisablePreDex"
 sudo: false
