@@ -184,7 +184,7 @@ public class VideoActivity extends BaseActivity<VideoPresenter.View, VideoCompon
     }
 
     @Override public void hideLoadingView() {
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.INVISIBLE);
     }
 
     @Override public void showError() {

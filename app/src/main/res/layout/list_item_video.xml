@@ -22,7 +22,7 @@
         android:layout_marginTop="@dimen/padding_medium"
         android:fontFamily="sans-serif-regular"
         android:gravity="center_vertical"
-        android:textColor="@color/primary_text"
+        android:textColor="?android:textColorSecondary"
         android:textSize="14sp"
         tools:text="10:12" />
 
@@ -35,7 +35,7 @@
         android:layout_below="@id/video_duration"
         android:layout_marginTop="@dimen/padding_medium"
         android:fontFamily="sans-serif-regular"
-        android:textColor="@color/secondary_text"
+        android:textColor="?android:textColorSecondary"
         android:textSize="12sp"
         tools:text="123456 views" />
 
@@ -55,7 +55,7 @@
         android:paddingLeft="@dimen/padding_medium"
         android:paddingRight="@dimen/padding_medium"
         android:paddingStart="@dimen/padding_medium"
-        android:textColor="@color/primary_text"
+        android:textColor="?android:textColorPrimary"
         android:textSize="16sp"
         tools:text="title" />
 
