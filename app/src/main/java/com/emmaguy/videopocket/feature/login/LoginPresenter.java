@@ -1,7 +1,6 @@
 package com.emmaguy.videopocket.feature.login;
 
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 
 import com.emmaguy.videopocket.common.Results;
 import com.emmaguy.videopocket.common.StringUtils;
@@ -13,14 +12,16 @@ import com.google.gson.annotations.SerializedName;
 
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
-import retrofit2.adapter.rxjava.Result;
 import rx.Observable;
 import rx.Scheduler;
+import rx.subjects.PublishSubject;
 import timber.log.Timber;
 
 class LoginPresenter extends BasePresenter<LoginPresenter.View> {
     private static final String BROWSER_REDIRECT_URL_REQUEST_TOKEN = "https://getpocket.com/auth/authorize?request_token=%s&redirect_uri=%s&mobile=1";
     private static final MediaType MEDIA_TYPE = MediaType.parse("application/json; charset=UTF-8");
+
+    private final PublishSubject<LoadingState> loadingStateSubject = PublishSubject.create();
 
     private final PocketAuthenticationApi pocketAuthenticationApi;
 
@@ -33,9 +34,7 @@ class LoginPresenter extends BasePresenter<LoginPresenter.View> {
     private final String callbackUrl;
     private final Gson gson;
 
-    LoginPresenter(@NonNull final PocketAuthenticationApi pocketAuthenticationApi, @NonNull final Scheduler ioScheduler,
-                   @NonNull final Scheduler uiScheduler, @NonNull final UserStorage userStorage,
-                   @NonNull final String consumerKey, @NonNull final String callbackUrl, @NonNull final Gson gson) {
+    LoginPresenter(@NonNull final PocketAuthenticationApi pocketAuthenticationApi, @NonNull final Scheduler ioScheduler, @NonNull final Scheduler uiScheduler, @NonNull final UserStorage userStorage, @NonNull final String consumerKey, @NonNull final String callbackUrl, @NonNull final Gson gson) {
         this.pocketAuthenticationApi = pocketAuthenticationApi;
         this.ioScheduler = ioScheduler;
         this.uiScheduler = uiScheduler;
@@ -43,6 +42,13 @@ class LoginPresenter extends BasePresenter<LoginPresenter.View> {
         this.userStorage = userStorage;
         this.callbackUrl = callbackUrl;
         this.gson = gson;
+    }
+
+    private enum LoadingState {
+        IDLE,
+        LOADING,
+        ERROR_REQUEST_TOKEN,
+        ERROR_ACCESS_TOKEN,
     }
 
     @Override public void onViewAttached(@NonNull final View view) {
@@ -54,62 +60,58 @@ class LoginPresenter extends BasePresenter<LoginPresenter.View> {
         }
 
         unsubscribeOnViewDetach(view.retrieveRequestToken()
-                .doOnNext(v -> view.showLoadingView())
                 .observeOn(ioScheduler)
-                .flatMap(v -> {
-                    final String json = gson.toJson(new RequestTokenRequestHolder(consumerKey, callbackUrl));
-                    final RequestBody body = RequestBody.create(MEDIA_TYPE, json);
-                    return pocketAuthenticationApi.requestToken(body);
+                .doOnNext(ignored -> loadingStateSubject.onNext(LoadingState.LOADING))
+                .map(ignored -> gson.toJson(new RequestTokenRequestHolder(consumerKey, callbackUrl)))
+                .map(json -> RequestBody.create(MEDIA_TYPE, json))
+                .switchMap(pocketAuthenticationApi::requestToken)
+                .doOnNext(requestTokenResult -> loadingStateSubject.onNext(LoadingState.IDLE))
+                .doOnNext(requestTokenResult -> {
+                    if (!Results.isSuccess(requestTokenResult)) {
+                        loadingStateSubject.onNext(LoadingState.ERROR_REQUEST_TOKEN);
+                    }
                 })
-                .observeOn(uiScheduler)
-                .map(result -> validRequestTokenOrNull(view, result))
-                .observeOn(ioScheduler)
-                .filter(requestToken -> requestToken != null)
+                .filter(Results::isSuccess)
+                .map(requestTokenResult -> requestTokenResult.response().body())
                 .doOnNext(requestToken -> userStorage.storeRequestToken(requestToken.getCode()))
                 .map(requestToken -> String.format(BROWSER_REDIRECT_URL_REQUEST_TOKEN, requestToken.getCode(), callbackUrl))
                 .observeOn(uiScheduler)
-                .doOnNext(url -> view.hideLoadingView())
-                .subscribe(view::startBrowser,
-                        throwable -> Timber.d(throwable, "Error getting request token and launching browser in LoginPresenter")));
+                .subscribe(view::startBrowser, throwable -> Timber.e(throwable, "Failure retrieving request token")));
 
         unsubscribeOnViewDetach(view.returnFromBrowser()
-                .doOnNext(v -> view.showLoadingView())
                 .observeOn(ioScheduler)
-                .flatMap(v -> {
-                    final String json = gson.toJson(new AccessTokenRequestHolder(consumerKey, userStorage.getRequestToken()));
-                    final RequestBody body = RequestBody.create(MEDIA_TYPE, json);
-                    return pocketAuthenticationApi.accessToken(body);
+                .doOnNext(ignored -> loadingStateSubject.onNext(LoadingState.LOADING))
+                .map(ignored -> gson.toJson(new AccessTokenRequestHolder(consumerKey, userStorage.getRequestToken())))
+                .map(json -> RequestBody.create(MEDIA_TYPE, json))
+                .switchMap(pocketAuthenticationApi::accessToken)
+                .doOnNext(requestTokenResult -> loadingStateSubject.onNext(LoadingState.IDLE))
+                .doOnNext(requestTokenResult -> {
+                    if (!Results.isSuccess(requestTokenResult)) {
+                        loadingStateSubject.onNext(LoadingState.ERROR_ACCESS_TOKEN);
+                    }
                 })
-                .observeOn(uiScheduler)
-                .map(result -> validAccessTokenOrNull(view, result))
-                .filter(accessToken -> accessToken != null)
+                .filter(Results::isSuccess)
+                .map(requestTokenResult -> requestTokenResult.response().body())
                 .doOnNext(accessToken -> {
                     userStorage.storeUsername(accessToken.getUsername());
                     userStorage.storeAccessToken(accessToken.getAccessToken());
                     userStorage.storeRequestToken("");
                 })
-                .doOnNext(accessToken -> view.hideLoadingView())
-                .subscribe(accessToken -> view.startVideos(),
-                        throwable -> Timber.d(throwable, "Error returning from browser and getting access token in LoginPresenter")));
-    }
+                .observeOn(uiScheduler)
+                .subscribe(accessToken -> view.startVideos(), throwable -> Timber.d(throwable, "Error returning from browser and getting access token in LoginPresenter")));
 
-    @Nullable
-    private RequestToken validRequestTokenOrNull(@NonNull final View view, final Result<RequestToken> result) {
-        if (!Results.isSuccess(result)) {
-            view.hideLoadingView();
-            view.showRequestTokenError();
-            return null;
-        }
-        return result.response().body();
-    }
+        unsubscribeOnViewDetach(loadingStateSubject.observeOn(uiScheduler).subscribe(loadingState -> {
+            if (loadingState == LoadingState.LOADING) {
+                view.showLoadingView();
+            } else if (loadingState == LoadingState.IDLE) {
+                view.hideLoadingView();
+            } else if (loadingState == LoadingState.ERROR_REQUEST_TOKEN) {
+                view.showRequestTokenError();
+            } else if (loadingState == LoadingState.ERROR_ACCESS_TOKEN) {
+                view.showAccessTokenError();
+            }
+        }));
 
-    @Nullable private AccessToken validAccessTokenOrNull(@NonNull final View view, final Result<AccessToken> result) {
-        if (!Results.isSuccess(result)) {
-            view.hideLoadingView();
-            view.showAccessTokenError();
-            return null;
-        }
-        return result.response().body();
     }
 
     private static class AccessTokenRequestHolder {
